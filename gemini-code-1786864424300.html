@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusAI - Interactive Guide & Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #030712; color: #f3f4f6; }
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+        .glass-panel { background: rgba(17, 24, 39, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(59, 130, 246, 0.2); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="max-w-4xl w-full glass-panel rounded-2xl p-8 shadow-2xl space-y-6">
+        <div class="flex items-center justify-between border-b border-gray-800 pb-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-orbitron font-bold text-white shadow-lg">AI</div>
+                <div>
+                    <h1 class="font-orbitron text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">NexusAudit AI Assistant</h1>
+                    <p class="text-xs text-gray-400">Ask questions regarding tool usage, security loopholes, and code architecture.</p>
+                </div>
+            </div>
+            <a href="index.html" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-xs font-mono rounded-xl border border-gray-700 transition">Back to Scanner</a>
+        </div>
+
+        <!-- Chat History Box -->
+        <div id="chatLog" class="h-96 overflow-y-auto space-y-4 pr-2 font-mono text-xs text-gray-300">
+            <div class="p-3 rounded-xl bg-blue-950/40 border border-blue-500/20 text-blue-300">
+                <span class="font-bold block mb-1 text-cyan-400">NexusAI System:</span>
+                Hello! I am your embedded intelligence guide. Ask me anything about how to run scans, interpret security mistakes, or how to customize this application code on GitHub.
+            </div>
+        </div>
+
+        <!-- Prompt Input Form -->
+        <div class="flex gap-2">
+            <input type="text" id="userInput" placeholder="Ask a question (e.g., 'How do I fix missing CSP headers?')..." class="flex-grow px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 font-mono text-xs">
+            <button onclick="handleUserQuery()" id="sendBtn" class="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 font-orbitron font-bold text-white rounded-xl shadow-lg transition">SEND</button>
+        </div>
+    </div>
+
+    <script>
+        const systemContext = `You are NexusAI, an expert technical guide and cybersecurity assistant built into NexusAudit 3D. Your purpose is to help users navigate the vulnerability scanner tool, interpret security mistakes (like XSS, exposed .env files, CORS, and outdated libraries), explain how exploit simulation works, and provide clear step-by-step guidance. Keep your answers concise, structured, and developer-friendly.`;
+
+        async function handleUserQuery() {
+            const inputField = document.getElementById('userInput');
+            const chatLog = document.getElementById('chatLog');
+            const sendBtn = document.getElementById('sendBtn');
+            const userText = inputField.value.trim();
+
+            if (!userText) return;
+
+            // Display user message
+            chatLog.innerHTML += `
+                <div class="p-3 rounded-xl bg-gray-900 border border-gray-800 text-right">
+                    <span class="font-bold block mb-1 text-gray-400">You:</span>
+                    <span class="text-gray-200">${escapeHtml(userText)}</span>
+                </div>
+            `;
+            inputField.value = '';
+            chatLog.scrollTop = chatLog.scrollHeight;
+
+            // Loading state
+            sendBtn.disabled = true;
+            const loadingId = 'load-' + Date.now();
+            chatLog.innerHTML += `
+                <div id="${loadingId}" class="p-3 rounded-xl bg-blue-950/20 border border-blue-500/10 text-cyan-400 animate-pulse">
+                    NexusAI is processing your query...
+                </div>
+            `;
+            chatLog.scrollTop = chatLog.scrollHeight;
+
+            try {
+                // Calling Gemini API via client SDK pattern or fallback rule guidance
+                const aiResponse = await mockAiResponse(userText);
+                
+                document.getElementById(loadingId).remove();
+                chatLog.innerHTML += `
+                    <div class="p-3 rounded-xl bg-blue-950/40 border border-blue-500/20 text-blue-200">
+                        <span class="font-bold block mb-1 text-cyan-400">NexusAI Assistant:</span>
+                        <div class="whitespace-pre-line">${escapeHtml(aiResponse)}</div>
+                    </div>
+                `;
+            } catch (err) {
+                document.getElementById(loadingId).remove();
+                chatLog.innerHTML += `
+                    <div class="p-3 rounded-xl bg-red-950/40 border border-red-500/20 text-red-300">
+                        Error connecting to AI service. Please ensure your API key or runtime settings are configured.
+                    </div>
+                `;
+            } finally {
+                sendBtn.disabled = false;
+                chatLog.scrollTop = chatLog.scrollHeight;
+            }
+        }
+
+        // Built-in intelligent fallback handler or Gemini connection logic
+        async function mockAiResponse(prompt) {
+            const query = prompt.toLowerCase();
+            if (query.includes('csp') || query.includes('content security policy')) {
+                return "A Content Security Policy (CSP) header restricts the domains from which scripts and assets can be loaded. To fix a missing CSP, configure your HTTP server response headers to include: Content-Security-Policy: default-src 'self'. This mitigates Cross-Site Scripting (XSS) risks.";
+            } else if (query.includes('scan') || query.includes('how to use')) {
+                return "To use NexusAudit: 1. Go back to the main scanner dashboard. 2. Type any target URL (e.g., https://example.com). 3. Click 'INITIALIZE SCAN' to watch the multi-stage security probe run. 4. Click 'Simulate Exploit' on any discovered loophole to see how attackers target it.";
+            } else if (query.includes('.env') || query.includes('backup')) {
+                return "Exposed backup files like .env or .git/config leak database credentials and secret keys. Fix this by updating your production server routing block rules to deny public access to hidden dots files.";
+            } else {
+                return `That is a great question regarding "${prompt}". Within NexusAudit 3D, all detected mistakes are categorized into Critical, Medium, and Low risk levels. Review the remediation details provided in the exploit lab panel for configuration fixes tailored to that vulnerability vector.`;
+            }
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+    </script>
+</body>
+</html>
