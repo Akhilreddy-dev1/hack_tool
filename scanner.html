@@ -17,6 +17,20 @@
     button, input { font: inherit; }
     button { cursor: pointer; }
     .shell { display: grid; grid-template-columns: 238px minmax(0, 1fr); min-height: 100vh; }
+    .landing { min-height: 100vh; display: grid; place-items: center; padding: 28px; position: relative; overflow: hidden; }
+    .landing.hidden { display: none; }
+    .landing-grid { position: absolute; inset: 0; opacity: .38; background-image: linear-gradient(#79aefc17 1px, transparent 1px), linear-gradient(90deg, #79aefc17 1px, transparent 1px); background-size: 52px 52px; transform: perspective(460px) rotateX(58deg) translateY(28%); transform-origin: center bottom; animation: drift 16s linear infinite; }
+    @keyframes drift { from { background-position: 0 0; } to { background-position: 0 52px; } }
+    .orb { position: absolute; width: 320px; height: 320px; border: 1px solid #63ddb166; border-radius: 50%; box-shadow: 0 0 70px #63ddb133, inset 0 0 50px #79aefc1c; transform: rotateX(62deg) rotateZ(-20deg); animation: orbit 10s ease-in-out infinite; }
+    .orb::before, .orb::after { content: ""; position: absolute; inset: 28px; border: 1px solid #79aefc66; border-radius: 50%; transform: rotateY(65deg); }
+    .orb::after { inset: 62px; transform: rotateY(-65deg) rotateZ(30deg); }
+    @keyframes orbit { 50% { transform: rotateX(62deg) rotateZ(20deg) translateY(-14px); } }
+    .landing-card { position: relative; z-index: 1; width: min(720px, 100%); padding: clamp(28px, 6vw, 64px); border: 1px solid #79aefc3d; border-radius: 24px; background: #101a29cc; box-shadow: var(--shadow); backdrop-filter: blur(16px); }
+    .landing-card h2 { max-width: 640px; margin: 10px 0 16px; font-size: clamp(42px, 8vw, 84px); line-height: .92; letter-spacing: -.08em; }
+    .landing-card p { max-width: 550px; color: var(--muted); font-size: 17px; }
+    .launch { margin-top: 24px; padding: 13px 20px; border: 1px solid #63ddb199; border-radius: 9px; color: #07151a; background: var(--green); font-weight: 800; }
+    .launch:hover { box-shadow: 0 0 30px #63ddb155; transform: translateY(-2px); }
+    .landing-meta { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 28px; color: var(--faint); font-size: 12px; }
     aside { border-right: 1px solid var(--line); background: #0c141fdd; padding: 24px 16px; }
     .brand { display: flex; align-items: center; gap: 10px; padding: 4px 10px 34px; font-weight: 760; letter-spacing: -.03em; font-size: 18px; }
     .brand-mark { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; color: #09111b; background: var(--green); font-weight: 900; }
@@ -87,7 +101,11 @@
   </style>
 </head>
 <body>
-  <div class="shell">
+  <section class="landing" id="landing">
+    <div class="landing-grid"></div><div class="orb"></div>
+    <div class="landing-card"><div class="eyebrow">NexusAudit / authorized defense</div><h2>Make security easier to act on.</h2><p>Scan public response headers, understand the risk, and get a practical next step. No exploit payloads. No mystery scores.</p><button class="launch" type="button" onclick="enterApp()">Open security workspace →</button><div class="landing-meta"><span>● Safe mode</span><span>● Header audit</span><span>● Built-in guidance</span></div></div>
+  </section>
+  <div class="shell" id="appShell" hidden>
     <aside>
       <div class="brand"><span class="brand-mark">N</span> NexusAudit</div>
       <nav><button class="active" type="button">Overview</button><button type="button" onclick="document.getElementById('findingsPanel').scrollIntoView({behavior:'smooth'})">Findings</button><button type="button" onclick="document.getElementById('assistant').scrollIntoView({behavior:'smooth'})">Fix assistant</button></nav>
@@ -152,8 +170,19 @@
       const input=$('question'), message=input.value.trim(); if (!message) return;
       $('chat').insertAdjacentHTML('beforeend',`<div class="bubble user">${escapeHtml(message)}</div>`); input.value='';
       try { const response=await fetch('/api/assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message,findings})}); const data=await response.json(); if(!response.ok) throw new Error(data.error); addBubble(data.reply); }
-      catch (_) { const lower=message.toLowerCase(); addBubble(lower.includes('csp') ? 'Start with default-src self, object-src none, and frame-ancestors none. Run the audit locally to confirm the header is present.' : 'Run the audit, select a finding, and start with the highest severity. The details panel contains the remediation steps.'); }
+      catch (_) { addBubble(localAssistant(message)); }
       $('chat').scrollTop=$('chat').scrollHeight;
+    }
+    function enterApp() { $('landing').classList.add('hidden'); $('appShell').hidden=false; $('targetUrl').focus(); }
+    function localAssistant(message) {
+      const lower=message.toLowerCase();
+      if (/(hack|exploit|break into|attack)/.test(lower)) return 'I cannot provide instructions to compromise Google or another third-party site. I can help you verify defenses on systems you own and explain the safe remediation for a finding.';
+      const selected=findings.find(item => lower.includes(item.id.toLowerCase()) || lower.includes(item.title.toLowerCase()));
+      if (selected) return selected.title + ': ' + selected.description + ' Fix it by ' + selected.remediation + ' Then rerun the audit to verify the header.';
+      if (lower.includes('csp') || lower.includes('content security')) return "Start with Content-Security-Policy: default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'. Test in report-only mode before enforcing.";
+      if (lower.includes('https') || lower.includes('hsts')) return 'Use HTTPS everywhere, redirect HTTP to HTTPS, then add Strict-Transport-Security after every subdomain is HTTPS-ready.';
+      if (findings.length) return 'The highest priority is ' + findings[0].title + '. Select it for the exact impact and remediation, apply the fix, and rerun the audit.';
+      return 'Run an audit first. Then ask me about a finding by name, or ask what to fix first.';
     }
     function addBubble(text) { $('chat').insertAdjacentHTML('beforeend',`<div class="bubble">${escapeHtml(text)}</div>`); }
   </script>
