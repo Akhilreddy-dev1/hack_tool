@@ -144,6 +144,24 @@ def scan_target(raw_target: str) -> dict:
     }
 
 
+def assistant_reply(message: str, findings: list[dict] | None = None) -> dict:
+    """Return practical, deterministic guidance without requiring an API key."""
+    prompt = message.strip().lower()
+    findings = findings or []
+    if not prompt:
+        return {"reply": "Tell me what you want to fix, or select a finding from the report.", "related": []}
+    if "score" in prompt or "result" in prompt:
+        return {"reply": "Start with critical and high findings, then rerun the scan after deploying each fix. A score is a prioritisation signal, not proof that an application is secure.", "related": [item["id"] for item in findings[:3]]}
+    if "csp" in prompt or "content security" in prompt:
+        return {"reply": "Begin with a report-only policy, review violations, then enforce it. A safe baseline is: default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'. Add only the script, style, image, and connection origins your app needs.", "related": ["missing-csp"]}
+    if "hsts" in prompt or "https" in prompt or "ssl" in prompt:
+        return {"reply": "Serve the application over HTTPS, redirect HTTP to HTTPS, and then add Strict-Transport-Security: max-age=31536000; includeSubDomains. Only include preload after confirming every subdomain supports HTTPS.", "related": ["http-only", "missing-hsts"]}
+    if "frame" in prompt or "clickjack" in prompt:
+        return {"reply": "Prevent framing with Content-Security-Policy: frame-ancestors 'none' (or 'self' when embedding is required). X-Frame-Options: DENY is a useful legacy fallback.", "related": ["missing-frame-protection"]}
+    if "referrer" in prompt or "privacy" in prompt:
+        return {"reply": "Set Referrer-Policy: strict-origin-when-cross-origin. Avoid putting secrets or personal data in URLs because headers cannot protect information already present in a query string.", "related": ["missing-referrer-policy"]}
+    return {"reply": "I can explain the report, prioritise fixes, or suggest secure headers. Try asking “How do I fix CSP?” or “What should I fix first?”.", "related": [item["id"] for item in findings[:1]]}
+
 class NexusHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(ROOT), **kwargs)
@@ -160,6 +178,20 @@ class NexusHandler(SimpleHTTPRequestHandler):
         super().do_GET()
 
     def do_POST(self) -> None:
+        if self.path == "/api/assistant":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                if length > 32_768:
+                    raise ValueError("Request body is too large.")
+                payload = json.loads(self.rfile.read(length) or b"{}")
+                message = str(payload.get("message", ""))
+                findings = payload.get("findings", [])
+                if not isinstance(findings, list):
+                    findings = []
+                self.send_json(assistant_reply(message, findings))
+            except (ValueError, json.JSONDecodeError) as exc:
+                self.send_json({"error": str(exc)}, 400)
+            return
         if self.path != "/api/scan":
             self.send_json({"error": "Not found."}, 404)
             return
