@@ -4,9 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NexusAudit Security Scanner</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
       --bg-deep: #0a0e1a;
@@ -21,17 +18,17 @@
       --border-subtle: rgba(0, 217, 255, 0.15);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', sans-serif; background: var(--bg-deep); color: var(--text-primary); min-height: 100vh; overflow-x: hidden; }
+    body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg-deep); color: var(--text-primary); min-height: 100vh; overflow-x: hidden; }
     #canvas-bg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.9; }
     .content { position: relative; z-index: 1; }
     .landing { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 2rem; animation: fadeIn .8s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     .logo-large { width: 120px; height: 120px; border-radius: 24px; margin-bottom: 2rem; display: grid; place-items: center; font-size: 4rem; background: linear-gradient(135deg, var(--matrix-green), var(--cyber-cyan)); box-shadow: 0 0 60px rgba(0,255,65,.45); animation: float 3s ease-in-out infinite; }
     @keyframes float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-18px) } }
-    .landing h1 { font-family: 'JetBrains Mono', monospace; font-size: clamp(2.6rem,8vw,5rem); letter-spacing: -0.04em; margin-bottom: 1rem; text-shadow: 0 0 30px rgba(0,217,255,.45); }
+    .landing h1 { font-size: clamp(2.6rem,8vw,5rem); font-weight: 750; letter-spacing: -0.055em; margin-bottom: 1rem; text-shadow: 0 0 30px rgba(0,217,255,.25); }
     .highlight { color: var(--matrix-green); }
     .landing p { max-width: 650px; color: var(--text-secondary); font-size: 1.1rem; margin: 0 auto 2.5rem; }
-    .enter-btn { padding: 1.25rem 2.5rem; border: none; border-radius: 16px; color: #02130b; background: linear-gradient(135deg, var(--matrix-green), var(--cyber-cyan)); font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1rem; letter-spacing: 0.04em; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; box-shadow: 0 10px 30px rgba(0,255,65,.4); }
+    .enter-btn { padding: 1.05rem 2rem; border: none; border-radius: 12px; color: #06130d; background: linear-gradient(135deg, var(--matrix-green), var(--cyber-cyan)); font-weight: 750; font-size: .9rem; letter-spacing: 0.02em; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; box-shadow: 0 10px 30px rgba(0,255,65,.25); }
     .enter-btn:hover { transform: translateY(-3px); box-shadow: 0 16px 40px rgba(0,217,255,.3); }
     .scanner-page { display: none; min-height: 100vh; animation: slideIn .5s ease-out; }
     .scanner-page.active { display: block; }
@@ -40,21 +37,21 @@
     .header-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
     .logo { display: flex; align-items: center; gap: 0.75rem; }
     .logo-icon { width: 42px; height: 42px; border-radius: 10px; display: grid; place-items: center; background: linear-gradient(135deg, var(--matrix-green), var(--cyber-cyan)); box-shadow: 0 4px 18px rgba(0,217,255,.3); font-size: 1.1rem; }
-    .logo-text { font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.04em; }
+    .logo-text { font-size: 1.15rem; font-weight: 750; letter-spacing: -0.03em; }
     .logo-text .accent { color: var(--matrix-green); }
-    .status-pill { display: inline-flex; align-items: center; gap: 0.6rem; padding: 0.55rem 1rem; border-radius: 999px; color: var(--matrix-green); background: rgba(0,255,65,.08); border: 1px solid rgba(0,255,65,.28); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+    .status-pill { display: inline-flex; align-items: center; gap: 0.6rem; padding: 0.55rem 1rem; border-radius: 999px; color: var(--matrix-green); background: rgba(0,255,65,.08); border: 1px solid rgba(0,255,65,.28); font-size: 0.72rem; font-weight: 700; }
     .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--matrix-green); animation: pulse 2s ease-in-out infinite; }
     @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(.9) } }
     main { max-width: 1400px; margin: 0 auto; padding: 3rem 2rem 4rem; }
     .hero { text-align: center; margin-bottom: 3rem; }
-    .hero h1 { font-family: 'JetBrains Mono', monospace; font-size: clamp(2.1rem,5vw,3.6rem); margin-bottom: 1rem; letter-spacing: -0.04em; }
+    .hero h1 { font-size: clamp(2.1rem,5vw,3.6rem); font-weight: 750; margin-bottom: 1rem; letter-spacing: -0.055em; }
     .hero p { max-width: 760px; margin: 0 auto 2.4rem; color: var(--text-secondary); }
     .scanner-form { max-width: 900px; margin: 0 auto; background: rgba(23,29,47,.72); border: 1px solid var(--border-subtle); border-radius: 18px; display: flex; align-items: center; gap: 1rem; padding: 1.2rem; flex-wrap: wrap; box-shadow: 0 16px 40px rgba(0,0,0,.22); }
     .input-wrapper { flex: 1; min-width: 260px; position: relative; }
     .input-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); font-size: 1rem; pointer-events: none; }
-    input[type="text"] { width: 100%; padding: 1rem 1rem 1rem 2.8rem; color: var(--text-primary); background: rgba(10,14,26,.7); border: 1px solid rgba(0,217,255,.2); border-radius: 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; outline: none; transition: border-color .2s ease, box-shadow .2s ease; }
+    input[type="text"] { width: 100%; padding: 1rem 1rem 1rem 2.8rem; color: var(--text-primary); background: rgba(10,14,26,.7); border: 1px solid rgba(0,217,255,.2); border-radius: 12px; font: inherit; font-size: 0.95rem; outline: none; transition: border-color .2s ease, box-shadow .2s ease; }
     input[type="text"]:focus { border-color: var(--cyber-cyan); box-shadow: 0 0 0 3px rgba(0,217,255,.12); }
-    .scan-btn { background: linear-gradient(135deg, var(--matrix-green), var(--cyber-cyan)); color: #06130d; border: none; border-radius: 12px; padding: 1rem 1.8rem; cursor: pointer; font-family: 'JetBrains Mono', monospace; font-weight: 700; transition: transform .2s ease, opacity .2s ease; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,217,255,.25); }
+    .scan-btn { background: linear-gradient(135deg, var(--matrix-green), var(--cyber-cyan)); color: #06130d; border: none; border-radius: 12px; padding: 1rem 1.8rem; cursor: pointer; font: inherit; font-weight: 750; transition: transform .2s ease, opacity .2s ease; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,217,255,.25); }
     .scan-btn:hover:not(:disabled) { transform: translateY(-2px); }
     .scan-btn:disabled { opacity: 0.7; cursor: not-allowed; }
     .terminal-status { max-width: 980px; margin: 1.5rem auto 2rem; border: 1px solid var(--border-subtle); background: rgba(10,14,26,.9); border-radius: 16px; padding: 1.3rem; display: none; font-family: 'JetBrains Mono', monospace; }
@@ -79,7 +76,7 @@
     @media (max-width: 980px) { .results-grid { grid-template-columns: 1fr; } }
     .panel { background: rgba(23,29,47,.76); border: 1px solid var(--border-subtle); border-radius: 18px; padding: 1.5rem; }
     .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; margin-bottom: 1.25rem; padding-bottom: 0.9rem; border-bottom: 1px solid var(--border-subtle); }
-    .panel-title { font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 600; }
+    .panel-title { font-size: 1.05rem; font-weight: 700; }
     .panel-badge { padding: 0.32rem 0.7rem; border-radius: 999px; background: rgba(0,217,255,.08); border: 1px solid var(--border-subtle); color: var(--text-secondary); font-size: 0.72rem; font-family: 'JetBrains Mono', monospace; }
     .vuln-list { display: flex; flex-direction: column; gap: 0.9rem; }
     .vuln-card { background: rgba(10,14,26,.62); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 1rem 1.05rem; cursor: pointer; transition: transform .2s ease, border-color .2s ease; }
@@ -216,10 +213,22 @@
         displayResults(result.target, result.vulnerabilities, result.stats);
         document.getElementById('terminalLog').innerHTML += '<div style="color:#00ff41">[+] Server analysis complete (' + result.status + ')</div>';
       } catch (error) {
-        document.getElementById('terminalStatus').classList.remove('active');
-        document.getElementById('scanBtn').disabled = false;
-        alert(error.message || 'Unable to complete the scan.');
+        const result = localAudit(targetUrl);
+        displayResults(result.target, result.vulnerabilities, result.stats);
+        document.getElementById('terminalLog').innerHTML += '<div style="color:#ffd000">[i] Static mode: using browser-side header checklist.</div>';
       }
+    }
+    function localAudit(targetUrl) {
+      const parsed = new URL(targetUrl);
+      const vulnerabilities = [];
+      const add = (id, title, severity, type, description, impact, remediation) => vulnerabilities.push({ id, title, severity, type, description, impact, remediation, exploit: 'This check requires a server response. Run python app.py for live header inspection.' });
+      if (parsed.protocol !== 'https:') add('http-only', 'No HTTPS Encryption', 'critical', 'Transport Security', 'The target uses plaintext HTTP.', 'Traffic can be intercepted.', 'Redirect all traffic to HTTPS.');
+      add('server-check', 'Live Header Check Unavailable', 'info', 'Scan Mode', 'GitHub Pages cannot make cross-origin header requests from the browser.', 'Browser-only scans are limited by CORS.', 'Run python app.py locally for live response-header checks.');
+      add('missing-csp', 'Review Content Security Policy', 'high', 'Injection Protection', 'Verify that a Content-Security-Policy header is configured.', 'A restrictive CSP reduces XSS impact.', 'Add a restrictive Content-Security-Policy header.');
+      add('missing-hsts', 'Review HSTS Header', 'medium', 'Transport Security', 'Verify Strict-Transport-Security on HTTPS responses.', 'Users may be exposed to downgrade attacks.', 'Set Strict-Transport-Security with an appropriate max-age.');
+      const counts = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
+      vulnerabilities.forEach(v => counts[v.severity]++);
+      return { target: targetUrl, vulnerabilities, stats: { ...counts, score: Math.max(0, 100 - counts.critical * 25 - counts.high * 15 - counts.medium * 8) } };
     }
     function displayResults(targetUrl, vulnerabilities, stats) {
       currentVulnerabilities = vulnerabilities;
