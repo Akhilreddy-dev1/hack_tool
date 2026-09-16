@@ -160,6 +160,11 @@ def assistant_reply(message: str, findings: list[dict] | None = None) -> dict:
             return {"reply": f"{selected['title']}: {selected['description']} Fix it by {selected['remediation']} Then rerun the audit to verify the response header.", "related": [selected["id"]]}
     if "score" in prompt or "result" in prompt:
         return {"reply": "Start with critical and high findings, then rerun the scan after deploying each fix. A score is a prioritisation signal, not proof that an application is secure.", "related": [item["id"] for item in findings[:3]]}
+    if "happen" in prompt or "risk" in prompt or "not fixed" in prompt or "consequence" in prompt:
+        if findings:
+            item = findings[0]
+            return {"reply": f"If {item['title']} remains unresolved, {item['impact']} Apply this remediation: {item['remediation']} Then rerun the audit to confirm the risk is reduced.", "related": [item["id"]]}
+        return {"reply": "Run an audit first so I can explain the concrete consequence and remediation for each finding.", "related": []}
     if "csp" in prompt or "content security" in prompt:
         return {"reply": "Begin with a report-only policy, review violations, then enforce it. A safe baseline is: default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'. Add only the script, style, image, and connection origins your app needs.", "related": ["missing-csp"]}
     if "hsts" in prompt or "https" in prompt or "ssl" in prompt:
@@ -222,6 +227,32 @@ def audit_code(source: str, filename: str = "pasted-code") -> dict:
             "stats": {**counts, "score": max(0, 100 - counts["critical"] * 25 -
                                              counts["high"] * 15 - counts["medium"] * 8)}}
 
+
+def audit_project() -> dict:
+    """Review source files in this application without requiring pasted code."""
+    allowed = {".html", ".htm", ".js", ".mjs", ".css", ".py", ".json", ".yml", ".yaml"}
+    ignored = {".git", ".venv", "node_modules", "__pycache__", "attachments"}
+    files_checked = 0
+    findings = []
+    for path in ROOT.rglob("*"):
+        if not path.is_file() or path.suffix.lower() not in allowed:
+            continue
+        if any(part in ignored for part in path.parts):
+            continue
+        try:
+            source = path.read_text(encoding="utf-8-sig")
+        except (OSError, UnicodeDecodeError):
+            continue
+        files_checked += 1
+        report = audit_code(source, str(path.relative_to(ROOT)))
+        findings.extend(report["vulnerabilities"])
+    counts = {severity: sum(item["severity"] == severity for item in findings)
+              for severity in ("critical", "high", "medium", "low", "info")}
+    return {"project": ROOT.name, "files_checked": files_checked,
+            "vulnerabilities": findings, "stats": {**counts, "score": max(
+                0, 100 - counts["critical"] * 25 - counts["high"] * 15 - counts["medium"] * 8)}}
+
+
 class NexusHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(ROOT), **kwargs)
@@ -238,6 +269,12 @@ class NexusHandler(SimpleHTTPRequestHandler):
         super().do_GET()
 
     def do_POST(self) -> None:
+        if self.path == "/api/project-audit":
+            try:
+                self.send_json(audit_project())
+            except OSError as exc:
+                self.send_json({"error": f"Project audit failed: {exc}"}, 500)
+            return
         if self.path == "/api/code-audit":
             try:
                 length = int(self.headers.get("Content-Length", "0"))
