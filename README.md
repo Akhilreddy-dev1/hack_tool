@@ -41,3 +41,5 @@ an exploit or crawler.
 
 The API accepts `POST /api/scan` with a JSON body such as
 `{"target":"https://example.com"}`. Use `GET /api/health` for a health check.
+
+The built-in Fix assistant is available at POST /api/assistant with a JSON body containing message and optional findings. It provides deterministic remediation guidance and works without external AI credentials.
