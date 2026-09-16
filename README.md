@@ -24,3 +24,19 @@
 nexus-audit/
 ├── index.html         # Main 3D Scanner Dashboard & Exploit Lab
 └── ai-assistant.html  # Interactive AI Guide & Technical Chat Assistant
+
+## Run locally
+
+Python 3.10+ is required. Start the application from the repository root:
+
+```bash
+python app.py
+```
+
+Open <http://127.0.0.1:8000/>. The scanner sends one request to an authorized
+public HTTP(S) target and checks its response headers. Private, loopback, and
+non-public addresses are blocked. This is a defensive configuration check, not
+an exploit or crawler.
+
+The API accepts `POST /api/scan` with a JSON body such as
+`{"target":"https://example.com"}`. Use `GET /api/health` for a health check.
