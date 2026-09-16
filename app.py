@@ -150,6 +150,8 @@ def assistant_reply(message: str, findings: list[dict] | None = None) -> dict:
     findings = findings or []
     if not prompt:
         return {"reply": "Tell me what you want to fix, or select a finding from the report.", "related": []}
+    if prompt in {"hi", "hello", "hey", "good morning", "good afternoon", "good evening"} or prompt.startswith(("hi ", "hello ", "hey ")):
+        return {"reply": "Hi! I'm NexusAudit. I can explain your findings, review pasted source code, and help you prioritise defensive fixes. What would you like to check?", "related": []}
     if any(word in prompt for word in ("hack", "exploit", "break into", "attack")):
         return {"reply": "I cannot provide instructions to compromise Google or any third-party website. I can help you verify defenses on systems you own: review the finding, apply its remediation, and rerun the authorized header audit.", "related": [item["id"] for item in findings[:3]]}
     if findings:
@@ -168,6 +170,58 @@ def assistant_reply(message: str, findings: list[dict] | None = None) -> dict:
         return {"reply": "Set Referrer-Policy: strict-origin-when-cross-origin. Avoid putting secrets or personal data in URLs because headers cannot protect information already present in a query string.", "related": ["missing-referrer-policy"]}
     return {"reply": "I can explain the report, prioritise fixes, or suggest secure headers. Try asking “How do I fix CSP?” or “What should I fix first?”.", "related": [item["id"] for item in findings[:1]]}
 
+
+def audit_code(source: str, filename: str = "pasted-code") -> dict:
+    """Run a small, transparent static review over user-provided source code."""
+    if not source.strip():
+        raise ValueError("Paste code before running the code audit.")
+    if len(source.encode("utf-8")) > 512_000:
+        raise ValueError("Code input is limited to 512 KB.")
+    checks = [
+        ("hardcoded-secret", "Possible hardcoded secret", "critical",
+         r"(?i)(api[_-]?key|secret|password|token)\s*[:=]\s*['\"][^'\"]{8,}['\"]",
+         "Credentials in source can be copied from the repository or browser bundle.",
+         "Move secrets to a server-side environment variable and rotate exposed credentials."),
+        ("dangerous-html", "Unsafe HTML injection sink", "high",
+         r"(?i)(innerHTML\s*=|document\.write\s*\()",
+         "Untrusted content written as HTML can create cross-site scripting risk.",
+         "Prefer textContent or a trusted sanitizer and validate untrusted input."),
+        ("dynamic-code", "Dynamic code execution", "high",
+         r"(?i)(eval\s*\(|new\s+Function\s*\()",
+         "Dynamic code execution turns data flowing into this expression into executable code.",
+         "Remove eval/new Function and use explicit data parsing or dispatch."),
+        ("shell-exec", "Shell command execution", "high",
+         r"(?i)(subprocess\.(run|Popen|call)|child_process\.(exec|spawn)|os\.system\s*\()",
+         "Process execution needs strict argument handling and least privilege.",
+         "Use fixed argument arrays, allowlists, timeouts, and avoid shell=True."),
+        ("http-url", "Insecure HTTP URL", "medium",
+         r"(?i)(['\"]http://|fetch\s*\(\s*['\"]http:)",
+         "Plain HTTP can expose traffic to interception.",
+         "Use HTTPS and reject insecure redirects for sensitive operations."),
+        ("debug-mode", "Debug mode may be enabled", "medium",
+         r"(?i)(debug\s*=\s*True|DEBUG\s*=\s*True|NODE_ENV\s*=\s*['\"]development)",
+         "Verbose errors and debug tooling can disclose internals in production.",
+         "Disable debug mode in production and configure it through deployment settings."),
+        ("weak-cookie", "Cookie missing security attributes", "medium",
+         r"(?i)(set-cookie|document\.cookie)",
+         "Cookies should be protected against script access and cross-site requests.",
+         "Set Secure, HttpOnly, and SameSite attributes on session cookies."),
+    ]
+    findings = []
+    lines = source.splitlines()
+    for finding_id, title, severity, pattern, impact, remediation in checks:
+        import re
+        matches = [index + 1 for index, line in enumerate(lines) if re.search(pattern, line)]
+        if matches:
+            findings.append(finding(finding_id, title, severity, "Source Review",
+                                    f"Pattern found in {filename} at line(s): {', '.join(map(str, matches[:8]))}.",
+                                    impact, "Review the flagged line in an authorized code review.", remediation))
+    counts = {severity: sum(item["severity"] == severity for item in findings)
+              for severity in ("critical", "high", "medium", "low", "info")}
+    return {"filename": filename, "lines": len(lines), "vulnerabilities": findings,
+            "stats": {**counts, "score": max(0, 100 - counts["critical"] * 25 -
+                                             counts["high"] * 15 - counts["medium"] * 8)}}
+
 class NexusHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(ROOT), **kwargs)
@@ -184,6 +238,16 @@ class NexusHandler(SimpleHTTPRequestHandler):
         super().do_GET()
 
     def do_POST(self) -> None:
+        if self.path == "/api/code-audit":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                if length > 550_000:
+                    raise ValueError("Request body is too large.")
+                payload = json.loads(self.rfile.read(length) or b"{}")
+                self.send_json(audit_code(str(payload.get("code", "")), str(payload.get("filename", "pasted-code"))))
+            except (ValueError, json.JSONDecodeError) as exc:
+                self.send_json({"error": str(exc)}, 400)
+            return
         if self.path == "/api/assistant":
             try:
                 length = int(self.headers.get("Content-Length", "0"))

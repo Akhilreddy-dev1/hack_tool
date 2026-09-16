@@ -89,6 +89,10 @@
     .detail h5 { margin: 18px 0 4px; color: var(--green); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
     .detail p { margin: 0; }
     .assistant { margin-top: 16px; }
+    .code-audit { margin-top: 16px; }
+    .code-input { min-height: 180px; resize: vertical; font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .code-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 10px; }
+    .code-actions small { color: var(--faint); }
     .chat { height: 180px; overflow-y: auto; display: grid; align-content: start; gap: 9px; padding: 13px 0; }
     .bubble { max-width: 90%; padding: 9px 11px; border-radius: 9px; color: var(--muted); background: #192537; font-size: 13px; }
     .bubble.user { justify-self: end; color: var(--ink); background: #24425f; }
@@ -124,6 +128,7 @@
         <section class="panel"><div class="panel-head"><h3>Finding details</h3><span id="severityLabel">Select a finding</span></div><div class="detail" id="detail"><div class="empty">Choose a finding to see its impact and remediation.</div></div></section>
       </div>
       <section class="panel assistant" id="assistant"><div class="panel-head"><h3>Fix assistant</h3><span>Built in · no API key</span></div><div class="chat" id="chat"><div class="bubble">I can explain a finding or help prioritise the report. Ask “How do I fix CSP?”</div></div><form class="chat-form" onsubmit="event.preventDefault(); askAssistant();"><input id="question" placeholder="Ask about a finding…" aria-label="Ask the fix assistant"><button type="submit">Ask</button></form></section>
+      <section class="panel code-audit" id="codeAudit"><div class="panel-head"><h3>Source code review</h3><span>Paste code you own</span></div><p class="helper">This reviews the code you provide for common risky patterns. It cannot inspect a private website from only its URL.</p><textarea class="code-input" id="codeInput" placeholder="Paste HTML, JavaScript, Python, or server code here…"></textarea><div class="code-actions"><small id="codeStatus">No code reviewed yet</small><button class="primary" type="button" onclick="auditCode()">Review code</button></div></section>
       <footer>Use NexusAudit only on systems you own or are authorised to assess. GitHub Pages uses a safe browser checklist; <code>python app.py</code> enables live header inspection locally.</footer>
     </main>
   </div>
@@ -173,9 +178,22 @@
       catch (_) { addBubble(localAssistant(message)); }
       $('chat').scrollTop=$('chat').scrollHeight;
     }
+    async function auditCode() {
+      const source = $('codeInput').value, status = $('codeStatus');
+      if (!source.trim()) { status.textContent = 'Paste code first.'; return; }
+      status.textContent = 'Reviewing code…';
+      try {
+        const response = await fetch('/api/code-audit', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({code:source, filename:'pasted-code'}) });
+        const report = await response.json(); if (!response.ok) throw new Error(report.error);
+        renderReport({ target:'pasted-code', domain:'source review', vulnerabilities:report.vulnerabilities, stats:report.stats });
+        status.textContent = report.vulnerabilities.length + ' review item(s) found across ' + report.lines + ' lines.';
+        $('findingsPanel').scrollIntoView({behavior:'smooth'});
+      } catch (error) { status.textContent = error.message || 'Code review failed.'; }
+    }
     function enterApp() { $('landing').classList.add('hidden'); $('appShell').hidden=false; $('targetUrl').focus(); }
     function localAssistant(message) {
       const lower=message.toLowerCase();
+      if (/^(hi|hello|hey)(\s|!|$)/.test(lower)) return "Hi! I'm NexusAudit. I can explain your findings, review pasted source code, and help you prioritise defensive fixes. What would you like to check?";
       if (/(hack|exploit|break into|attack)/.test(lower)) return 'I cannot provide instructions to compromise Google or another third-party site. I can help you verify defenses on systems you own and explain the safe remediation for a finding.';
       const selected=findings.find(item => lower.includes(item.id.toLowerCase()) || lower.includes(item.title.toLowerCase()));
       if (selected) return selected.title + ': ' + selected.description + ' Fix it by ' + selected.remediation + ' Then rerun the audit to verify the header.';
