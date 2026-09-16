@@ -150,6 +150,12 @@ def assistant_reply(message: str, findings: list[dict] | None = None) -> dict:
     findings = findings or []
     if not prompt:
         return {"reply": "Tell me what you want to fix, or select a finding from the report.", "related": []}
+    if any(word in prompt for word in ("hack", "exploit", "break into", "attack")):
+        return {"reply": "I cannot provide instructions to compromise Google or any third-party website. I can help you verify defenses on systems you own: review the finding, apply its remediation, and rerun the authorized header audit.", "related": [item["id"] for item in findings[:3]]}
+    if findings:
+        selected = next((item for item in findings if item["title"].lower() in prompt or item["id"].lower() in prompt), None)
+        if selected:
+            return {"reply": f"{selected['title']}: {selected['description']} Fix it by {selected['remediation']} Then rerun the audit to verify the response header.", "related": [selected["id"]]}
     if "score" in prompt or "result" in prompt:
         return {"reply": "Start with critical and high findings, then rerun the scan after deploying each fix. A score is a prioritisation signal, not proof that an application is secure.", "related": [item["id"] for item in findings[:3]]}
     if "csp" in prompt or "content security" in prompt:
