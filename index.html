@@ -1,650 +1,271 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NexusAudit</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
-
-<style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Rajdhani', sans-serif;
-  background: #0a0e17;
-  color: #e0e0e0;
-  overflow-x: hidden;
-}
-
-#particles {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-}
-
-.container {
-  position: relative;
-  z-index: 1;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
-.landing {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-}
-
-.logo {
-  width: 100px;
-  height: 100px;
-  background: linear-gradient(135deg, #00ff88, #00ddff);
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 3rem;
-  margin-bottom: 2rem;
-  animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-20px); }
-}
-
-h1 {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: clamp(2.5rem, 6vw, 4rem);
-  font-weight: 700;
-  margin-bottom: 1rem;
-  color: #00ddff;
-  text-shadow: 0 0 30px rgba(0, 221, 255, 0.5);
-}
-
-.tagline {
-  font-size: 1.2rem;
-  color: #888;
-  max-width: 500px;
-  margin: 0 auto 3rem;
-}
-
-.btn {
-  padding: 1rem 2.5rem;
-  background: linear-gradient(135deg, #00ff88, #00ddff);
-  border: none;
-  border-radius: 8px;
-  color: #000;
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.btn:hover {
-  transform: translateY(-3px);
-}
-
-.scanner {
-  display: none;
-}
-
-.scanner.active {
-  display: block;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  background: rgba(20, 25, 35, 0.8);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
-  margin-bottom: 2rem;
-}
-
-.header-logo {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 1.5rem;
-  font-weight: 700;
-}
-
-.status {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: rgba(0, 255, 136, 0.1);
-  border: 1px solid rgba(0, 255, 136, 0.3);
-  border-radius: 20px;
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 0.85rem;
-  color: #00ff88;
-}
-
-.dot {
-  width: 8px;
-  height: 8px;
-  background: #00ff88;
-  border-radius: 50%;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
-
-.scan-form {
-  background: rgba(20, 25, 35, 0.6);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(0, 221, 255, 0.2);
-  border-radius: 12px;
-  padding: 2rem;
-  margin-bottom: 2rem;
-}
-
-.scan-form h2 {
-  font-family: 'Share Tech Mono', monospace;
-  margin-bottom: 1.5rem;
-}
-
-.input-group {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-input {
-  flex: 1;
-  min-width: 250px;
-  padding: 1rem;
-  background: rgba(10, 14, 23, 0.8);
-  border: 1px solid rgba(0, 221, 255, 0.3);
-  border-radius: 8px;
-  color: #e0e0e0;
-  font-family: 'Share Tech Mono', monospace;
-}
-
-input:focus {
-  outline: none;
-  border-color: #00ddff;
-}
-
-.terminal {
-  display: none;
-  background: rgba(10, 14, 23, 0.9);
-  border: 1px solid rgba(0, 221, 255, 0.2);
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 0.9rem;
-}
-
-.terminal.active {
-  display: block;
-}
-
-.progress {
-  height: 6px;
-  background: rgba(0, 221, 255, 0.1);
-  border-radius: 3px;
-  overflow: hidden;
-  margin: 1rem 0;
-}
-
-.progress-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #00ff88, #00ddff);
-  width: 0;
-  transition: width 0.3s;
-}
-
-.log {
-  max-height: 120px;
-  overflow-y: auto;
-  color: #888;
-  line-height: 1.8;
-}
-
-.results {
-  display: none;
-}
-
-.results.active {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 2rem;
-}
-
-.metrics {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.metric {
-  background: rgba(20, 25, 35, 0.6);
-  border-left: 4px solid;
-  border-radius: 8px;
-  padding: 1.5rem;
-}
-
-.metric.critical { border-color: #ff0055; }
-.metric.warning { border-color: #ffaa00; }
-.metric.info { border-color: #00ddff; }
-.metric.success { border-color: #00ff88; }
-
-.metric-label {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 0.85rem;
-  color: #888;
-  margin-bottom: 0.5rem;
-}
-
-.metric-value {
-  font-size: 2.5rem;
-  font-weight: 700;
-}
-
-.metric.critical .metric-value { color: #ff0055; }
-.metric.warning .metric-value { color: #ffaa00; }
-.metric.info .metric-value { color: #00ddff; }
-.metric.success .metric-value { color: #00ff88; }
-
-.panel {
-  background: rgba(20, 25, 35, 0.6);
-  border: 1px solid rgba(0, 221, 255, 0.2);
-  border-radius: 12px;
-  padding: 1.5rem;
-}
-
-.panel h3 {
-  font-family: 'Share Tech Mono', monospace;
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(0, 221, 255, 0.2);
-}
-
-.vuln {
-  background: rgba(10, 14, 23, 0.6);
-  border: 1px solid rgba(0, 221, 255, 0.2);
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.vuln:hover {
-  border-color: #00ddff;
-  transform: translateX(3px);
-}
-
-.vuln-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 0.5rem;
-}
-
-.vuln-title {
-  font-weight: 600;
-}
-
-.badge {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 0.75rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 4px;
-  white-space: nowrap;
-}
-
-.badge.critical { background: rgba(255, 0, 85, 0.2); color: #ff0055; }
-.badge.high { background: rgba(255, 85, 0, 0.2); color: #ff5500; }
-.badge.medium { background: rgba(255, 170, 0, 0.2); color: #ffaa00; }
-.badge.low { background: rgba(0, 221, 255, 0.2); color: #00ddff; }
-
-.vuln-desc {
-  font-size: 0.9rem;
-  color: #888;
-}
-
-.console {
-  background: rgba(10, 14, 23, 0.9);
-  border: 1px solid rgba(0, 255, 136, 0.2);
-  border-radius: 8px;
-  padding: 1.5rem;
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 0.85rem;
-  min-height: 400px;
-  color: #00ff88;
-}
-
-.console-section {
-  margin-bottom: 1.5rem;
-}
-
-.console-label {
-  color: #ffaa00;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-.console-code {
-  background: rgba(0, 0, 0, 0.5);
-  border-radius: 4px;
-  padding: 1rem;
-  overflow-x: auto;
-  white-space: pre-wrap;
-}
-
-@media (max-width: 768px) {
-  .results.active {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NexusAudit Security Scanner</title>
+  <style>
+    :root {
+      --bg-deep: #0a0e1a;
+      --bg-elevated: #171d2f;
+      --matrix-green: #00ff41;
+      --cyber-cyan: #00d9ff;
+      --alert-red: #ff0055;
+      --warning-amber: #ffd000;
+      --text-primary: #edf3ff;
+      --text-secondary: #9aa6ba;
+      --text-dim: #5d6477;
+      --border-subtle: rgba(0, 217, 255, 0.15);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg-deep); color: var(--text-primary); min-height: 100vh; overflow-x: hidden; }
+    #canvas-bg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.9; }
+    .content { position: relative; z-index: 1; }
+    .landing { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 2rem; animation: fadeIn .8s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .logo-large { width: 120px; height: 120px; border-radius: 24px; margin-bottom: 2rem; display: grid; place-items: center; font-size: 4rem; background: linear-gradient(135deg, var(--matrix-green), var(--cyber-cyan)); box-shadow: 0 0 60px rgba(0,255,65,.45); animation: float 3s ease-in-out infinite; }
+    @keyframes float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-18px) } }
+    .landing h1 { font-size: clamp(2.6rem,8vw,5rem); font-weight: 750; letter-spacing: -0.055em; margin-bottom: 1rem; text-shadow: 0 0 30px rgba(0,217,255,.25); }
+    .highlight { color: var(--matrix-green); }
+    .landing p { max-width: 650px; color: var(--text-secondary); font-size: 1.1rem; margin: 0 auto 2.5rem; }
+    .enter-btn { padding: 1.05rem 2rem; border: none; border-radius: 12px; color: #06130d; background: linear-gradient(135deg, var(--matrix-green), var(--cyber-cyan)); font-weight: 750; font-size: .9rem; letter-spacing: 0.02em; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; box-shadow: 0 10px 30px rgba(0,255,65,.25); }
+    .enter-btn:hover { transform: translateY(-3px); box-shadow: 0 16px 40px rgba(0,217,255,.3); }
+    .scanner-page { display: none; min-height: 100vh; animation: slideIn .5s ease-out; }
+    .scanner-page.active { display: block; }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
+    header { background: rgba(23,29,47,.9); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border-subtle); padding: 1rem 2rem; position: sticky; top: 0; z-index: 10; }
+    .header-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .logo { display: flex; align-items: center; gap: 0.75rem; }
+    .logo-icon { width: 42px; height: 42px; border-radius: 10px; display: grid; place-items: center; background: linear-gradient(135deg, var(--matrix-green), var(--cyber-cyan)); box-shadow: 0 4px 18px rgba(0,217,255,.3); font-size: 1.1rem; }
+    .logo-text { font-size: 1.15rem; font-weight: 750; letter-spacing: -0.03em; }
+    .logo-text .accent { color: var(--matrix-green); }
+    .status-pill { display: inline-flex; align-items: center; gap: 0.6rem; padding: 0.55rem 1rem; border-radius: 999px; color: var(--matrix-green); background: rgba(0,255,65,.08); border: 1px solid rgba(0,255,65,.28); font-size: 0.72rem; font-weight: 700; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--matrix-green); animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(.9) } }
+    main { max-width: 1400px; margin: 0 auto; padding: 3rem 2rem 4rem; }
+    .hero { text-align: center; margin-bottom: 3rem; }
+    .hero h1 { font-size: clamp(2.1rem,5vw,3.6rem); font-weight: 750; margin-bottom: 1rem; letter-spacing: -0.055em; }
+    .hero p { max-width: 760px; margin: 0 auto 2.4rem; color: var(--text-secondary); }
+    .scanner-form { max-width: 900px; margin: 0 auto; background: rgba(23,29,47,.72); border: 1px solid var(--border-subtle); border-radius: 18px; display: flex; align-items: center; gap: 1rem; padding: 1.2rem; flex-wrap: wrap; box-shadow: 0 16px 40px rgba(0,0,0,.22); }
+    .input-wrapper { flex: 1; min-width: 260px; position: relative; }
+    .input-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); font-size: 1rem; pointer-events: none; }
+    input[type="text"] { width: 100%; padding: 1rem 1rem 1rem 2.8rem; color: var(--text-primary); background: rgba(10,14,26,.7); border: 1px solid rgba(0,217,255,.2); border-radius: 12px; font: inherit; font-size: 0.95rem; outline: none; transition: border-color .2s ease, box-shadow .2s ease; }
+    input[type="text"]:focus { border-color: var(--cyber-cyan); box-shadow: 0 0 0 3px rgba(0,217,255,.12); }
+    .scan-btn { background: linear-gradient(135deg, var(--matrix-green), var(--cyber-cyan)); color: #06130d; border: none; border-radius: 12px; padding: 1rem 1.8rem; cursor: pointer; font: inherit; font-weight: 750; transition: transform .2s ease, opacity .2s ease; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,217,255,.25); }
+    .scan-btn:hover:not(:disabled) { transform: translateY(-2px); }
+    .scan-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+    .terminal-status { max-width: 980px; margin: 1.5rem auto 2rem; border: 1px solid var(--border-subtle); background: rgba(10,14,26,.9); border-radius: 16px; padding: 1.3rem; display: none; font-family: 'JetBrains Mono', monospace; }
+    .terminal-status.active { display: block; }
+    .terminal-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.8rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-subtle); }
+    .terminal-label { color: var(--cyber-cyan); }
+    .progress-percent { color: var(--matrix-green); }
+    .progress-bar { height: 8px; border-radius: 999px; overflow: hidden; background: rgba(0,217,255,.08); margin-bottom: 1rem; }
+    .progress-fill { width: 0; height: 100%; background: linear-gradient(90deg, var(--matrix-green), var(--cyber-cyan)); transition: width .25s ease; }
+    .terminal-log { font-size: 0.8rem; color: var(--text-secondary); max-height: 170px; overflow-y: auto; line-height: 1.9; }
+    .dashboard { display: none; margin-top: 2rem; }
+    .dashboard.active { display: block; }
+    .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .metric-card { background: rgba(23,29,47,.8); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 1.35rem; position: relative; overflow: hidden; }
+    .metric-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--cyber-cyan); }
+    .metric-card.critical::before { background: var(--alert-red); }
+    .metric-card.warning::before { background: var(--warning-amber); }
+    .metric-card.success::before { background: var(--matrix-green); }
+    .metric-label { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; letter-spacing: 0.08em; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 0.6rem; }
+    .metric-value { font-family: 'JetBrains Mono', monospace; font-size: clamp(1.8rem,3vw,2.6rem); font-weight: 700; line-height: 1.1; }
+    .results-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 2rem; }
+    @media (max-width: 980px) { .results-grid { grid-template-columns: 1fr; } }
+    .panel { background: rgba(23,29,47,.76); border: 1px solid var(--border-subtle); border-radius: 18px; padding: 1.5rem; }
+    .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; margin-bottom: 1.25rem; padding-bottom: 0.9rem; border-bottom: 1px solid var(--border-subtle); }
+    .panel-title { font-size: 1.05rem; font-weight: 700; }
+    .panel-badge { padding: 0.32rem 0.7rem; border-radius: 999px; background: rgba(0,217,255,.08); border: 1px solid var(--border-subtle); color: var(--text-secondary); font-size: 0.72rem; font-family: 'JetBrains Mono', monospace; }
+    .vuln-list { display: flex; flex-direction: column; gap: 0.9rem; }
+    .vuln-card { background: rgba(10,14,26,.62); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 1rem 1.05rem; cursor: pointer; transition: transform .2s ease, border-color .2s ease; }
+    .vuln-card:hover { transform: translateX(3px); border-color: var(--cyber-cyan); }
+    .vuln-card.selected { border-color: var(--matrix-green); box-shadow: 0 0 0 1px rgba(0,255,65,.3); }
+    .vuln-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 0.45rem; }
+    .vuln-title { font-weight: 600; margin-bottom: 0.25rem; }
+    .vuln-desc { color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5; }
+    .severity-badge { border-radius: 6px; padding: 0.3rem 0.55rem; font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; }
+    .severity-badge.critical { background: rgba(255,0,85,.12); color: var(--alert-red); border: 1px solid rgba(255,0,85,.32); }
+    .severity-badge.high { background: rgba(255,85,0,.12); color: #ff7c00; border: 1px solid rgba(255,124,0,.28); }
+    .severity-badge.medium { background: rgba(255,208,0,.12); color: var(--warning-amber); border: 1px solid rgba(255,208,0,.28); }
+    .severity-badge.low { background: rgba(0,217,255,.08); color: var(--cyber-cyan); border: 1px solid rgba(0,217,255,.18); }
+    .severity-badge.info { background: rgba(0,255,65,.08); color: var(--matrix-green); border: 1px solid rgba(0,255,65,.2); }
+    .exploit-console { min-height: 340px; background: rgba(10,14,26,.88); border: 1px solid rgba(0,255,65,.18); border-radius: 12px; padding: 1.25rem; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.8; color: var(--matrix-green); }
+    .empty-state { height: 100%; min-height: 280px; display: grid; place-items: center; color: var(--text-dim); font-style: italic; }
+    .console-section { margin-bottom: 1.1rem; }
+    .console-label { color: var(--warning-amber); margin-bottom: 0.4rem; font-weight: 700; }
+    .console-code { background: rgba(0,0,0,.25); border: 1px solid rgba(0,255,65,.12); border-radius: 8px; padding: 0.9rem; white-space: pre-wrap; word-break: break-word; color: var(--matrix-green); }
+    footer { padding: 2rem 1rem 3rem; text-align: center; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+  </style>
 </head>
 <body>
-
-<canvas id="particles"></canvas>
-
-<div class="container">
-  <div class="landing" id="landing">
-    <div class="logo">🔒</div>
-    <h1>NEXUSAUDIT</h1>
-    <p class="tagline">Advanced web security scanner with real-time vulnerability detection</p>
-    <button class="btn" onclick="start()">ENTER SCANNER</button>
-  </div>
-
-  <div class="scanner" id="scanner">
-    <div class="header">
-      <div class="header-logo">🔒 NEXUSAUDIT</div>
-      <div class="status">
-        <div class="dot"></div>
-        ONLINE
-      </div>
+  <canvas id="canvas-bg"></canvas>
+  <div class="content">
+    <div class="landing" id="landingPage">
+      <div class="logo-large">🔒</div>
+      <h1>NEXUS<span class="highlight">AUDIT</span></h1>
+      <p>Advanced web security scanner with real-time vulnerability detection, remediation guidance, and exploit analysis.</p>
+      <button class="enter-btn" onclick="enterScanner()">ENTER SCANNER ⚡</button>
     </div>
-
-    <div class="scan-form">
-      <h2>Security Scanner</h2>
-      <div class="input-group">
-        <input type="text" id="url" placeholder="https://example.com">
-        <button class="btn" onclick="scan()">SCAN</button>
-      </div>
-    </div>
-
-    <div class="terminal" id="terminal">
-      <div style="color: #00ddff; margin-bottom: 1rem" id="status">Initializing...</div>
-      <div class="progress">
-        <div class="progress-bar" id="progress"></div>
-      </div>
-      <div class="log" id="log"></div>
-    </div>
-
-    <div class="metrics" id="metrics"></div>
-
-    <div class="results" id="results">
-      <div class="panel">
-        <h3>⚠️ Vulnerabilities</h3>
-        <div id="vulns"></div>
-      </div>
-
-      <div class="panel">
-        <h3>🔬 Details</h3>
-        <div class="console" id="console">
-          <div style="color: #888">Select a vulnerability to view details</div>
+    <div class="scanner-page" id="scannerPage">
+      <header>
+        <div class="header-inner">
+          <div class="logo"><div class="logo-icon">🔒</div><div class="logo-text">NEXUS<span class="accent">AUDIT</span></div></div>
+          <div class="status-pill"><span class="status-dot"></span><span>SYSTEM ONLINE</span></div>
         </div>
-      </div>
+      </header>
+      <main>
+        <section class="hero">
+          <h1>Advanced Web <span class="highlight">Security</span> Scanner</h1>
+          <p>Analyze domains for exposed issues, misconfigurations, and high-risk vulnerabilities with a guided security audit workflow.</p>
+          <div class="scanner-form">
+            <div class="input-wrapper"><div class="input-icon">🌐</div><input type="text" id="targetUrl" placeholder="https://example.com" /></div>
+            <button class="scan-btn" id="scanBtn" onclick="startScan()">INITIALIZE SCAN ⚡</button>
+          </div>
+        </section>
+        <div class="terminal-status" id="terminalStatus">
+          <div class="terminal-header">
+            <div class="terminal-label" id="statusText">Initializing scan...</div>
+            <div class="progress-percent" id="progressPercent">0%</div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+          <div class="terminal-log" id="terminalLog"><div>[>] Target validation ready...</div></div>
+        </div>
+        <div class="dashboard" id="dashboard">
+          <div class="metrics" id="metricsGrid"></div>
+          <div class="results-grid">
+            <div class="panel">
+              <div class="panel-header"><div class="panel-title">⚠️ Vulnerabilities Detected</div><div class="panel-badge" id="targetLabel">—</div></div>
+              <div class="vuln-list" id="vulnList"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-header"><div class="panel-title">🔬 Exploit Analysis</div></div>
+              <div class="exploit-console" id="exploitConsole"><div class="empty-state">Select a vulnerability to view exploit details</div></div>
+            </div>
+          </div>
+        </div>
+      </main>
+      <footer>NexusAudit Security Systems © 2026 · Authorized Security Assessment Tool</footer>
     </div>
   </div>
-</div>
-
-<script>
-const canvas = document.getElementById('particles');
-const ctx = canvas.getContext('2d');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-const particles = [];
-for (let i = 0; i < 100; i++) {
-  particles.push({
-    x: Math.random() * canvas.width,
-    y: Math.random() * canvas.height,
-    z: Math.random() * 1000,
-    vz: Math.random() * 2 + 1
-  });
-}
-
-function animate() {
-  ctx.fillStyle = 'rgba(10, 14, 23, 0.1)';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  particles.forEach(p => {
-    p.z -= p.vz;
-    if (p.z <= 0) {
-      p.z = 1000;
-      p.x = Math.random() * canvas.width;
-      p.y = Math.random() * canvas.height;
+  <script>
+    const canvas = document.getElementById('canvas-bg');
+    const ctx = canvas.getContext('2d');
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+    const particles = [];
+    const particleCount = 120;
+    let mouseX = 0; let mouseY = 0;
+    class Particle {
+      constructor() { this.reset(); }
+      reset() { this.x = Math.random() * width; this.y = Math.random() * height; this.z = Math.random() * 1000; this.vx = (Math.random() - 0.5) * 0.6; this.vy = (Math.random() - 0.5) * 0.6; this.vz = Math.random() * 2 + 1; }
+      update() { this.z -= this.vz; if (this.z <= 0) this.reset(); this.x += this.vx + mouseX * 0.04; this.y += this.vy + mouseY * 0.04; if (this.x < 0 || this.x > width) this.vx *= -1; if (this.y < 0 || this.y > height) this.vy *= -1; }
+      draw() { const scale = 1000 / this.z; const x2d = (this.x - width / 2) * scale + width / 2; const y2d = (this.y - height / 2) * scale + height / 2; const size = scale * 2; const alpha = 1 - this.z / 1000; ctx.fillStyle = 'rgba(0, 217, 255, ' + alpha + ')'; ctx.beginPath(); ctx.arc(x2d, y2d, size, 0, Math.PI * 2); ctx.fill(); }
     }
-
-    const scale = 1000 / p.z;
-    const x = (p.x - canvas.width / 2) * scale + canvas.width / 2;
-    const y = (p.y - canvas.height / 2) * scale + canvas.height / 2;
-    const size = scale * 2;
-    const alpha = 1 - p.z / 1000;
-
-    ctx.fillStyle = `rgba(0, 221, 255, ${alpha})`;
-    ctx.beginPath();
-    ctx.arc(x, y, size, 0, Math.PI * 2);
-    ctx.fill();
-  });
-
-  requestAnimationFrame(animate);
-}
-
-animate();
-
-window.addEventListener('resize', () => {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-});
-
-function start() {
-  document.getElementById('landing').style.display = 'none';
-  document.getElementById('scanner').classList.add('active');
-}
-
-let vulns = [];
-
-async function scan() {
-  const input = document.getElementById('url').value.trim();
-  if (!input) return alert('Enter a URL');
-
-  let url = input;
-  if (!url.match(/^https?:\/\//)) url = 'https://' + url;
-
-  document.getElementById('results').classList.remove('active');
-  document.getElementById('terminal').classList.add('active');
-
-  const progress = document.getElementById('progress');
-  const status = document.getElementById('status');
-  const log = document.getElementById('log');
-
-  progress.style.width = '0%';
-  log.innerHTML = `<div style="color: #00ff88">[+] Target: ${url}</div>`;
-
-  const phases = [
-    { p: 20, msg: 'DNS lookup...', d: 400 },
-    { p: 40, msg: 'SSL check...', d: 600 },
-    { p: 60, msg: 'Header scan...', d: 700 },
-    { p: 80, msg: 'Vuln test...', d: 500 },
-    { p: 100, msg: 'Done', d: 300 }
-  ];
-
-  for (const phase of phases) {
-    await new Promise(r => setTimeout(r, phase.d));
-    progress.style.width = phase.p + '%';
-    status.textContent = phase.msg;
-    log.innerHTML += `<div>[>] ${phase.msg}</div>`;
-  }
-
-  await analyze(url);
-}
-
-async function analyze(url) {
-  vulns = [];
-  let crit = 0, high = 0, med = 0, low = 0;
-
-  const domain = new URL(url).hostname;
-  const https = url.startsWith('https://');
-
-  if (!https) {
-    vulns.push({
-      id: 1,
-      title: 'No HTTPS',
-      severity: 'critical',
-      desc: 'Site uses unencrypted HTTP',
-      impact: 'Traffic interception, credential theft',
-      fix: 'Enable HTTPS with SSL certificate'
-    });
-    crit++;
-  }
-
-  vulns.push({
-    id: 2,
-    title: 'Missing CSP',
-    severity: 'high',
-    desc: 'No Content Security Policy header',
-    impact: 'XSS attacks possible',
-    fix: 'Add CSP header'
-  });
-  high++;
-
-  vulns.push({
-    id: 3,
-    title: 'Missing HSTS',
-    severity: 'medium',
-    desc: 'No Strict-Transport-Security',
-    impact: 'SSL stripping attacks',
-    fix: 'Add HSTS header'
-  });
-  med++;
-
-  vulns.push({
-    id: 4,
-    title: 'No X-Frame-Options',
-    severity: 'medium',
-    desc: 'Clickjacking possible',
-    impact: 'UI redressing attacks',
-    fix: 'Add X-Frame-Options header'
-  });
-  med++;
-
-  if (domain.startsWith('www.')) {
-    vulns.push({
-      id: 5,
-      title: 'Subdomain Risk',
-      severity: 'low',
-      desc: 'Potential subdomain takeover',
-      impact: 'Phishing attacks',
-      fix: 'Audit DNS records'
-    });
-    low++;
-  }
-
-  const score = Math.max(0, 100 - (crit * 25 + high * 15 + med * 8 + low * 3));
-
-  show(url, {crit, high, med, low, score});
-}
-
-function show(url, stats) {
-  setTimeout(() => {
-    document.getElementById('terminal').classList.remove('active');
-    document.getElementById('results').classList.add('active');
-
-    document.getElementById('metrics').innerHTML = `
-      <div class="metric critical">
-        <div class="metric-label">CRITICAL</div>
-        <div class="metric-value">${stats.crit}</div>
-      </div>
-      <div class="metric warning">
-        <div class="metric-label">HIGH/MED</div>
-        <div class="metric-value">${stats.high + stats.med}</div>
-      </div>
-      <div class="metric info">
-        <div class="metric-label">LOW</div>
-        <div class="metric-value">${stats.low}</div>
-      </div>
-      <div class="metric ${stats.score >= 70 ? 'success' : 'warning'}">
-        <div class="metric-label">SCORE</div>
-        <div class="metric-value">${stats.score}</div>
-      </div>
-    `;
-
-    const list = document.getElementById('vulns');
-    list.innerHTML = '';
-
-    vulns.forEach(v => {
-      const div = document.createElement('div');
-      div.className = 'vuln';
-      div.innerHTML = `
-        <div class="vuln-header">
-          <div class="vuln-title">${v.title}</div>
-          <div class="badge ${v.severity}">${v.severity.toUpperCase()}</div>
-        </div>
-        <div class="vuln-desc">${v.desc}</div>
-      `;
-      div.onclick = () => showDetails(v);
-      list.appendChild(div);
-    });
-
-    if (vulns.length) showDetails(vulns[0]);
-  }, 300);
-}
-
-function showDetails(v) {
-  document.getElementById('console').innerHTML = `
-    <div style="color: #00ddff; font-weight: 600; margin-bottom: 1rem">[+] ${v.title}</div>
-    <div class="console-section">
-      <div class="console-label">SEVERITY</div>
-      <div>${v.severity.toUpperCase()}</div>
-    </div>
-    <div class="console-section">
-      <div class="console-label">IMPACT</div>
-      <div style="color: #888">${v.impact}</div>
-    </div>
-    <div class="console-section">
-      <div class="console-label">🛡️ FIX</div>
-      <div style="color: #888">${v.fix}</div>
-    </div>
-  `;
-}
-
-document.getElementById('url').addEventListener('keypress', e => {
-  if (e.key === 'Enter') scan();
-});
-</script>
+    for (let i = 0; i < particleCount; i++) particles.push(new Particle());
+    function animate() { ctx.fillStyle = 'rgba(10, 14, 26, 0.16)'; ctx.fillRect(0,0,width,height); particles.forEach(p => { p.update(); p.draw(); }); requestAnimationFrame(animate); }
+    animate();
+    window.addEventListener('resize', () => { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; });
+    window.addEventListener('mousemove', event => { mouseX = (event.clientX / width - 0.5) * 2; mouseY = (event.clientY / height - 0.5) * 2; });
+    function enterScanner() { document.getElementById('landingPage').style.display = 'none'; document.getElementById('scannerPage').classList.add('active'); }
+    let currentVulnerabilities = [];
+    async function startScan() {
+      const urlInput = document.getElementById('targetUrl').value.trim();
+      if (!urlInput) { alert('Please enter a valid URL to scan'); return; }
+      let targetUrl = urlInput;
+      if (!/^https?:\/\//i.test(targetUrl)) targetUrl = 'https://' + targetUrl;
+      document.getElementById('dashboard').classList.remove('active');
+      document.getElementById('terminalStatus').classList.add('active');
+      document.getElementById('scanBtn').disabled = true;
+      const progressFill = document.getElementById('progressFill');
+      const progressPercent = document.getElementById('progressPercent');
+      const statusText = document.getElementById('statusText');
+      const terminalLog = document.getElementById('terminalLog');
+      progressFill.style.width = '0%';
+      terminalLog.innerHTML = '<div style="color:#00ff41">[+] Target locked: ' + targetUrl + '</div>';
+      const phases = [
+        { progress: 20, label: 'Resolving DNS and SSL certificate...', delay: 400 },
+        { progress: 40, label: 'Probing HTTP headers...', delay: 600 },
+        { progress: 60, label: 'Analyzing security configurations...', delay: 700 },
+        { progress: 80, label: 'Testing for common vulnerabilities...', delay: 500 },
+        { progress: 100, label: 'Compiling results...', delay: 300 }
+      ];
+      for (const phase of phases) {
+        await new Promise(resolve => setTimeout(resolve, phase.delay));
+        progressFill.style.width = phase.progress + '%';
+        progressPercent.textContent = phase.progress + '%';
+        statusText.textContent = phase.label;
+        terminalLog.innerHTML += '<div>[>] ' + phase.label + '</div>';
+        terminalLog.scrollTop = terminalLog.scrollHeight;
+      }
+      await performScan(targetUrl);
+    }
+    async function performScan(targetUrl) {
+      try {
+        const response = await fetch('/api/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target: targetUrl })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'The scan request failed.');
+        displayResults(result.target, result.vulnerabilities, result.stats);
+        document.getElementById('terminalLog').innerHTML += '<div style="color:#00ff41">[+] Server analysis complete (' + result.status + ')</div>';
+      } catch (error) {
+        const result = localAudit(targetUrl);
+        displayResults(result.target, result.vulnerabilities, result.stats);
+        document.getElementById('terminalLog').innerHTML += '<div style="color:#ffd000">[i] Static mode: using browser-side header checklist.</div>';
+      }
+    }
+    function localAudit(targetUrl) {
+      const parsed = new URL(targetUrl);
+      const vulnerabilities = [];
+      const add = (id, title, severity, type, description, impact, remediation) => vulnerabilities.push({ id, title, severity, type, description, impact, remediation, exploit: 'This check requires a server response. Run python app.py for live header inspection.' });
+      if (parsed.protocol !== 'https:') add('http-only', 'No HTTPS Encryption', 'critical', 'Transport Security', 'The target uses plaintext HTTP.', 'Traffic can be intercepted.', 'Redirect all traffic to HTTPS.');
+      add('server-check', 'Live Header Check Unavailable', 'info', 'Scan Mode', 'GitHub Pages cannot make cross-origin header requests from the browser.', 'Browser-only scans are limited by CORS.', 'Run python app.py locally for live response-header checks.');
+      add('missing-csp', 'Review Content Security Policy', 'high', 'Injection Protection', 'Verify that a Content-Security-Policy header is configured.', 'A restrictive CSP reduces XSS impact.', 'Add a restrictive Content-Security-Policy header.');
+      add('missing-hsts', 'Review HSTS Header', 'medium', 'Transport Security', 'Verify Strict-Transport-Security on HTTPS responses.', 'Users may be exposed to downgrade attacks.', 'Set Strict-Transport-Security with an appropriate max-age.');
+      const counts = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
+      vulnerabilities.forEach(v => counts[v.severity]++);
+      return { target: targetUrl, vulnerabilities, stats: { ...counts, score: Math.max(0, 100 - counts.critical * 25 - counts.high * 15 - counts.medium * 8) } };
+    }
+    function displayResults(targetUrl, vulnerabilities, stats) {
+      currentVulnerabilities = vulnerabilities;
+      setTimeout(() => {
+        document.getElementById('terminalStatus').classList.remove('active');
+        document.getElementById('dashboard').classList.add('active');
+        document.getElementById('scanBtn').disabled = false;
+        document.getElementById('targetLabel').textContent = new URL(targetUrl).hostname;
+        const metricsGrid = document.getElementById('metricsGrid');
+        metricsGrid.innerHTML = [
+          '<div class="metric-card critical"><div class="metric-label">Critical</div><div class="metric-value">' + stats.critical + '</div></div>',
+          '<div class="metric-card warning"><div class="metric-label">High / Medium</div><div class="metric-value">' + (stats.high + stats.medium) + '</div></div>',
+          '<div class="metric-card"><div class="metric-label">Low</div><div class="metric-value">' + stats.low + '</div></div>',
+          '<div class="metric-card ' + (stats.score >= 70 ? 'success' : stats.score >= 40 ? 'warning' : 'critical') + '"><div class="metric-label">Score</div><div class="metric-value">' + stats.score + '</div></div>'
+        ].join('');
+        const vulnList = document.getElementById('vulnList');
+        vulnList.innerHTML = '';
+        vulnerabilities.forEach(vuln => {
+          const card = document.createElement('div');
+          card.className = 'vuln-card';
+          card.dataset.id = vuln.id;
+          card.innerHTML = '<div class="vuln-header"><div><div class="vuln-title">' + vuln.title + '</div><div class="vuln-desc">' + vuln.description + '</div></div><div class="severity-badge ' + vuln.severity + '">' + vuln.severity + '</div></div>';
+          card.onclick = () => selectVulnerability(vuln.id);
+          vulnList.appendChild(card);
+        });
+        if (vulnerabilities.length) selectVulnerability(vulnerabilities[0].id);
+      }, 300);
+    }
+    function selectVulnerability(vulnId) {
+      document.querySelectorAll('.vuln-card').forEach(card => { card.classList.toggle('selected', card.dataset.id === vulnId); });
+      const vuln = currentVulnerabilities.find(item => item.id === vulnId);
+      if (!vuln) return;
+      const exploitText = vuln.exploit || 'No exploit example recorded.';
+      const safeCode = document.createElement('div'); safeCode.textContent = exploitText;
+      document.getElementById('exploitConsole').innerHTML = '<div class="console-section"><div class="console-label">[+] ' + vuln.title + '</div><div class="console-code">' + safeCode.innerHTML + '</div></div><div class="console-section"><div class="console-label">TYPE</div><div>' + vuln.type + '</div></div><div class="console-section"><div class="console-label">IMPACT</div><div>' + vuln.impact + '</div></div><div class="console-section"><div class="console-label">REMEDIATION</div><div>' + vuln.remediation + '</div></div>';
+    }
+    document.getElementById('targetUrl').addEventListener('keypress', event => { if (event.key === 'Enter') startScan(); });
+  </script>
 </body>
 </html>

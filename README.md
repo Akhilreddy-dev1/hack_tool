@@ -24,6 +24,7 @@
 nexus-audit/
 ├── index.html         # Main 3D Scanner Dashboard & Exploit Lab
 └── ai-assistant.html  # Interactive AI Guide & Technical Chat Assistant
+```
 
 ## Run locally
 
